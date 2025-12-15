@@ -1,28 +1,21 @@
-import { Button, Container, Group, Title } from "@mantine/core";
-import { IconBeer } from "@tabler/icons-react";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { Layout } from "./components/Layout";
+
+const DashboardPlaceholder = () => <h1>🏠 Dashboard - Your Caps</h1>;
+const AddCapPlaceholder = () => <h1>➕ Add New Cap Page</h1>;
+const MatcherPlaceholder = () => <h1>🔍 Matcher - Find Similar Caps</h1>;
 
 function App() {
   return (
-    <Container p="xl">
-      <Title order={1} mb="md">
-        Beer Cap Matcher 🍺
-      </Title>
-
-      <Group>
-        <Button
-          color="blue"
-          size="lg"
-          leftSection={<IconBeer size={20} />}
-          onClick={() => alert("It works!")}
-        >
-          Add New Cap
-        </Button>
-
-        <Button variant="outline" size="lg" color="red">
-          Delete
-        </Button>
-      </Group>
-    </Container>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<DashboardPlaceholder />} />
+          <Route path="/add" element={<AddCapPlaceholder />} />
+          <Route path="/match" element={<MatcherPlaceholder />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
 
