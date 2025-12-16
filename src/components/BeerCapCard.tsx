@@ -1,6 +1,8 @@
 import { Badge, Button, Card, Group, Image, Stack, Text } from "@mantine/core";
 import { IconStar, IconTrash } from "@tabler/icons-react";
+import { Link } from "react-router-dom";
 import type { BeerCap } from "../types";
+import { getImageUrl } from "../utils/imageUtils";
 
 interface BeerCapCardProps {
   cap: BeerCap;
@@ -9,19 +11,24 @@ interface BeerCapCardProps {
 
 export function BeerCapCard({ cap, onDelete }: BeerCapCardProps) {
   return (
-    <Card shadow="sm" padding="lg" radius="md" withBorder>
-      {/* 1. Card Section for the Image */}
-      {/* This ensures the image goes edge-to-edge without padding */}
+    <Card
+      shadow="sm"
+      padding="lg"
+      radius="md"
+      withBorder
+      component={Link}
+      to={`/cap/${cap.id}`}
+      style={{ cursor: "pointer", textDecoration: "none", color: "inherit" }}
+    >
       <Card.Section>
         <Image
-          src={cap.presigned_url}
+          src={getImageUrl(cap.presigned_url)}
           height={160}
           alt={cap.beer.name}
           fallbackSrc="https://placehold.co/600x400?text=No+Image"
         />
       </Card.Section>
 
-      {/* 2. Main Content */}
       <Stack mt="md" mb="xs" gap="xs">
         <Group justify="space-between">
           <Text fw={500} truncate>
@@ -38,14 +45,12 @@ export function BeerCapCard({ cap, onDelete }: BeerCapCardProps) {
           )}
         </Group>
 
-        {/* Variant Name (if it exists) */}
         {cap.variant_name && (
           <Text size="sm" c="dimmed">
             Variant: {cap.variant_name}
           </Text>
         )}
 
-        {/* Country Badge */}
         {cap.beer.country && (
           <Badge color="gray" variant="outline">
             {cap.beer.country.name}
@@ -53,7 +58,6 @@ export function BeerCapCard({ cap, onDelete }: BeerCapCardProps) {
         )}
       </Stack>
 
-      {/* 3. Action Button (Delete) */}
       <Button
         color="red"
         variant="light"
@@ -61,7 +65,11 @@ export function BeerCapCard({ cap, onDelete }: BeerCapCardProps) {
         mt="md"
         radius="md"
         leftSection={<IconTrash size={16} />}
-        onClick={() => onDelete?.(cap.id)}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onDelete?.(cap.id);
+        }}
       >
         Delete
       </Button>
