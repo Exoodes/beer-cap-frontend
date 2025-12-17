@@ -13,21 +13,29 @@ import {
   ThemeIcon,
   Title,
 } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import {
   IconArrowLeft,
   IconBeer,
   IconCalendar,
+  IconPencil,
   IconStar,
+  IconTrash,
   IconWorld,
 } from "@tabler/icons-react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
-import { getCapById } from "../../api/beerCaps";
+import { deleteCap, getCapById } from "../../api/beerCaps";
 import { getImageUrl } from "../../utils/imageUtils";
+import { EditCapModal } from "./EditCapModal";
 
 export function CapDetailPage() {
-  const { id } = useParams(); // Get the "id" from the URL (e.g., /cap/42)
+  const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  // Modal state for editing
+  const [opened, { open, close }] = useDisclosure(false);
 
   // 1. Fetch Single Cap Data
   const {
@@ -35,10 +43,34 @@ export function CapDetailPage() {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["beerCap", id], // Unique cache key including ID
-    queryFn: () => getCapById(Number(id)), // Call API
-    enabled: !!id, // Only run if ID exists
+    queryKey: ["beerCap", id],
+    queryFn: () => getCapById(Number(id)),
+    enabled: !!id,
   });
+
+  // 2. Delete Mutation
+  const deleteMutation = useMutation({
+    mutationFn: deleteCap,
+    onSuccess: () => {
+      // Refresh the dashboard list so the deleted item is gone
+      queryClient.invalidateQueries({ queryKey: ["beerCaps"] });
+      // Navigate back to home
+      navigate("/");
+    },
+    onError: () => {
+      alert("Failed to delete cap");
+    },
+  });
+
+  const handleDelete = () => {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this cap? This cannot be undone.",
+      )
+    ) {
+      deleteMutation.mutate(Number(id));
+    }
+  };
 
   if (isLoading)
     return (
@@ -55,7 +87,10 @@ export function CapDetailPage() {
 
   return (
     <Container size="lg" py="xl">
-      {/* 2. Back Button */}
+      {/* Edit Modal Component (Hidden by default) */}
+      <EditCapModal opened={opened} close={close} cap={cap} />
+
+      {/* Back Button */}
       <Button
         variant="subtle"
         leftSection={<IconArrowLeft size={16} />}
@@ -66,7 +101,7 @@ export function CapDetailPage() {
       </Button>
 
       <Grid gutter="xl">
-        {/* 3. Left Column: Big Image */}
+        {/* Left Column: Big Image */}
         <Grid.Col span={{ base: 12, md: 6 }}>
           <Paper shadow="sm" radius="md" p="xs" withBorder>
             <Image
@@ -78,7 +113,7 @@ export function CapDetailPage() {
           </Paper>
         </Grid.Col>
 
-        {/* 4. Right Column: Details */}
+        {/* Right Column: Details */}
         <Grid.Col span={{ base: 12, md: 6 }}>
           <Stack gap="lg">
             <div>
@@ -129,8 +164,13 @@ export function CapDetailPage() {
                     <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
                       Brand
                     </Text>
-                    {/* Note: Your API currently nests brand inside beer, check your type definition if getting error */}
-                    <Text fw={500}>Unknown Brand</Text>
+                    {/* Try to display brand if available in the type */}
+                    <Text fw={500}>
+                      {/* Now this won't error */}
+                      {cap.beer.beer_brand?.name ||
+                        cap.beer.brand?.name ||
+                        "Unknown Brand"}
+                    </Text>
                   </div>
                 </Group>
 
@@ -151,10 +191,23 @@ export function CapDetailPage() {
             </Paper>
 
             <Group mt="xl">
-              <Button size="md" variant="light">
+              <Button
+                size="md"
+                variant="light"
+                onClick={open}
+                leftSection={<IconPencil size={16} />}
+              >
                 Edit Details
               </Button>
-              <Button size="md" color="red" variant="subtle">
+
+              <Button
+                size="md"
+                color="red"
+                variant="subtle"
+                onClick={handleDelete}
+                loading={deleteMutation.isPending}
+                leftSection={<IconTrash size={16} />}
+              >
                 Delete Cap
               </Button>
             </Group>

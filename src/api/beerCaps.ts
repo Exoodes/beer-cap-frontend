@@ -28,11 +28,26 @@ export const createCap = async (formData: FormData): Promise<BeerCap> => {
   return response.data;
 };
 
-// For updates, we send standard JSON
 export const updateCap = async (
   id: number,
-  data: { variant_name?: string; rating?: number; collected_date?: string },
+  data: { 
+    variant_name?: string; 
+    collected_date?: string | null;
+    beer_id?: number; // 👈 Add this
+  }
 ): Promise<BeerCap> => {
   const response = await client.patch<BeerCap>(`/beer_caps/${id}/`, data);
   return response.data;
+};
+
+export const updateBeer = async (
+  beerId: number,
+  capId: number,
+  data: { rating?: number; name?: string }
+): Promise<void> => {
+  // Use the 'params' object for query parameters. 
+  // This avoids double-slash issues or encoding errors.
+  await client.patch(`/beers/${beerId}/`, data, {
+    params: { beer_cap_id: capId },
+  });
 };
