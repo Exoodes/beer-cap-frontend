@@ -211,6 +211,7 @@ export function AddCapPage() {
                       data={brandOptions}
                       searchable
                       required
+					  nothingFoundMessage="No brands found"
                       {...form.getInputProps("brand_id")}
                     />
                   ) : (
@@ -236,6 +237,7 @@ export function AddCapPage() {
                       data={countryOptions}
                       searchable
                       required
+					  nothingFoundMessage="No countries found"
                       {...form.getInputProps("country_id")}
                     />
                   ) : (

@@ -12,6 +12,10 @@ export const getBrands = async (): Promise<BeerBrand[]> => {
 };
 
 export const getBeers = async (): Promise<Beer[]> => {
-  const response = await client.get<Beer[]>("/beers/");
+  const response = await client.get<Beer[]>("/beers/", {
+    params: { 
+      include_beer_brand: true,
+    }
+  });
   return response.data;
 };
