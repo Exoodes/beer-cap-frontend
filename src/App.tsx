@@ -1,10 +1,10 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
+import { AdminPage } from "./features/Admin/AdminPage";
 import { AddCapPage } from "./features/Dashboard/AddCapPage";
 import { CapDetailPage } from "./features/Dashboard/CapDetailPage";
 import { DashboardPage } from "./features/Dashboard/DashboardPage";
-
-const MatcherPlaceholder = () => <h1>🔍 Matcher - Find Similar Caps</h1>;
+import { MatcherPage } from "./features/Dashboard/MatcherPage";
 
 function App() {
   return (
@@ -13,7 +13,8 @@ function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/add" element={<AddCapPage />} />
-          <Route path="/match" element={<MatcherPlaceholder />} />
+          <Route path="/match" element={<MatcherPage />} />
+          <Route path="/admin" element={<AdminPage />} />
         </Route>
         <Route path="/cap/:id" element={<CapDetailPage />} />
       </Routes>

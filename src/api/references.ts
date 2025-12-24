@@ -19,3 +19,31 @@ export const getBeers = async (): Promise<Beer[]> => {
   });
   return response.data;
 };
+
+
+export const deleteBeer = async (id: number): Promise<void> => {
+  await client.delete(`/beers/${id}/`);
+};
+
+export const deleteBrand = async (id: number): Promise<void> => {
+  await client.delete(`/beer_brands/${id}/`);
+};
+
+export const deleteCountry = async (id: number): Promise<void> => {
+  await client.delete(`/countries/${id}/`);
+};
+
+export const createBrand = async (name: string): Promise<BeerBrand> => {
+  const formData = new FormData();
+  formData.append("name", name);
+  const response = await client.post<BeerBrand>("/beer_brands/", formData);
+  return response.data;
+};
+
+export const createCountry = async (name: string, description: string): Promise<Country> => {
+  const formData = new FormData();
+  formData.append("name", name);
+  formData.append("description", description);
+  const response = await client.post<Country>("/countries/", formData);
+  return response.data;
+};

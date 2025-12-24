@@ -7,14 +7,11 @@ import {
   Title,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { IconBeer, IconPlus, IconSearch } from "@tabler/icons-react";
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { IconBeer, IconPlus } from "@tabler/icons-react";
+import { Link, Outlet } from "react-router-dom";
 
 export function Layout() {
   const [opened, { toggle }] = useDisclosure();
-  const location = useLocation();
-
-  const isActive = (path: string) => location.pathname === path;
 
   return (
     <AppShell
@@ -41,37 +38,16 @@ export function Layout() {
               <Title order={3}>Beer Cap Matcher</Title>
             </Group>
 
-            {/* 2. Desktop Navigation (Hidden on Mobile) */}
-            <Group gap="xs" visibleFrom="sm">
-              <Button
-                component={Link}
-                to="/"
-                variant={isActive("/") ? "light" : "subtle"}
-              >
-                Dashboard
-              </Button>
-              <Button
-                component={Link}
-                to="/add"
-                variant={isActive("/add") ? "light" : "subtle"}
-                leftSection={<IconPlus size={16} />}
-              >
-                Add Cap
-              </Button>
-              <Button
-                component={Link}
-                to="/match"
-                variant={isActive("/match") ? "light" : "subtle"}
-                leftSection={<IconSearch size={16} />}
-              >
-                Find Match
-              </Button>
+            <Group>
+              <Button component={Link} to="/" variant="subtle">Dashboard</Button>
+              <Button component={Link} to="/match" variant="subtle">Matcher</Button>
+              <Button component={Link} to="/admin" variant="light" color="gray">Admin</Button>
+              <Button component={Link} to="/add" leftSection={<IconPlus size={16} />}>Add Cap</Button>
             </Group>
           </Group>
         </Container>
       </AppShell.Header>
 
-      {/* 3. Mobile Navigation Drawer (Hidden on Desktop) */}
       <AppShell.Navbar p="md">
         <Button
           component={Link}
@@ -96,7 +72,6 @@ export function Layout() {
         </Button>
       </AppShell.Navbar>
 
-      {/* 4. The Content Area */}
       <AppShell.Main>
         <Container size="xl">
           <Outlet />

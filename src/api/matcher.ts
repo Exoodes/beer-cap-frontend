@@ -1,18 +1,35 @@
-import type { BeerCap } from "../types";
 import { client } from "./client";
 
-export interface MatchResult {
-  cap: BeerCap;
-  score: number;
+export interface QueryResultResponse {
+  mean_similarity: number;
+  min_similarity: number;
+  max_similarity: number;
+  match_count: number;
 }
 
-export const findSimilarCaps = async (imageFile: File): Promise<BeerCap[]> => {
+export interface BeerCapWithQueryResult {
+  id: number;
+  variant_name?: string;
+  collected_date?: string;
+  presigned_url: string;
+  query_result: QueryResultResponse;
+}
+
+export const findSimilarCaps = async (
+  imageFile: File,
+  topK = 5
+): Promise<BeerCapWithQueryResult[]> => {
   const formData = new FormData();
   formData.append("file", imageFile);
 
-  const response = await client.post<BeerCap[]>("/similarity/query", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  const response = await client.post<BeerCapWithQueryResult[]>(
+    "/similarity/query-image",
+    formData,
+    {
+      params: { top_k: topK },
+      headers: { "Content-Type": "multipart/form-data" },
+    }
+  );
 
   return response.data;
 };
