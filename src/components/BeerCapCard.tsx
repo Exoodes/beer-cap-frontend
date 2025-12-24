@@ -30,10 +30,19 @@ export function BeerCapCard({ cap, onDelete }: BeerCapCardProps) {
       </Card.Section>
 
       <Stack mt="md" mb="xs" gap="xs">
-        <Group justify="space-between">
-          <Text fw={500} truncate>
-            {cap.beer.name}
-          </Text>
+        <Group justify="space-between" wrap="nowrap">
+          <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
+            {/* Display Brand Name above or next to Beer Name */}
+            {(cap.beer.beer_brand || cap.beer.brand) && (
+              <Text size="xs" c="dimmed" fw={700} tt="uppercase" truncate>
+                {cap.beer.beer_brand?.name || cap.beer.brand?.name}
+              </Text>
+            )}
+            <Text fw={500} truncate>
+              {cap.beer.name}
+            </Text>
+          </Stack>
+          
           {cap.beer.rating && (
             <Badge
               color="yellow"
@@ -52,7 +61,7 @@ export function BeerCapCard({ cap, onDelete }: BeerCapCardProps) {
         )}
 
         {cap.beer.country && (
-          <Badge color="gray" variant="outline">
+          <Badge color="gray" variant="outline" w="fit-content">
             {cap.beer.country.name}
           </Badge>
         )}

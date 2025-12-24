@@ -45,9 +45,7 @@ export const updateBeer = async (
   capId: number,
   data: { rating?: number; name?: string }
 ): Promise<void> => {
-  // Use the 'params' object for query parameters. 
-  // This avoids double-slash issues or encoding errors.
   await client.patch(`/beers/${beerId}/`, data, {
-    params: { beer_cap_id: capId },
+    params: { beer_cap_id: capId }, // This sends ?beer_cap_id=9
   });
 };

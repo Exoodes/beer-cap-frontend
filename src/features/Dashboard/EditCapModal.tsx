@@ -51,48 +51,40 @@ export function EditCapModal({ opened, close, cap }: EditCapModalProps) {
 
   const mutation = useMutation({
     mutationFn: async (values: typeof form.values) => {
-      // DEBUG: Log IDs to console to verify we aren't swapping them
-      console.log(
-        `[EditCap] Updating Cap ID: ${cap.id}, Beer ID: ${cap.beer.id}`,
-      );
+      const beerId = cap.beer?.id;
+      const capId = cap.id;
 
-      // 1. Prepare Data
+      if (!capId) throw new Error("Missing Cap ID");
+
+      // 1. Update Beer Rating first (if changed)
+      // The backend PATCH /beers/{id}/ expects beer_cap_id as a query param
+      if (values.rating !== (cap.beer?.rating || 0)) {
+        if (!beerId)
+          throw new Error("Cannot update rating: Cap has no associated beer.");
+
+        await updateBeer(beerId, capId, { rating: values.rating });
+      }
+
+      // 2. Prepare Cap Payload
       const dateString = values.collected_date
         ? values.collected_date.toISOString().split("T")[0]
         : null;
 
-      // Ensure we send the beer_id to keep the link alive
       const capPayload = {
         variant_name: values.variant_name,
         collected_date: dateString,
-        beer_id: cap.beer.id,
       };
 
-      // 2. Execute Updates (Beer First, then Cap)
-
-      // Update Beer Rating (Only if changed)
-      if (values.rating !== (cap.beer.rating || 0)) {
-        if (!cap.beer.id)
-          throw new Error("Missing Beer ID - Cannot update rating");
-        console.log(`[EditCap] Updating Beer Rating to ${values.rating}...`);
-        await updateBeer(cap.beer.id, cap.id, { rating: values.rating });
-      }
-
-      // Update Cap Details
-      console.log(`[EditCap] Updating Cap Details...`);
-      await updateCap(cap.id, capPayload);
+      // 3. Update Cap Details
+      await updateCap(capId, capPayload);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["beerCap", String(cap.id)] });
+      // Correct invalidation
+      queryClient.invalidateQueries({ queryKey: ["beerCap", cap.id] });
       queryClient.invalidateQueries({ queryKey: ["beerCaps"] });
       close();
     },
-    onError: (err) => {
-      console.error("Mutation failed:", err);
-      alert(
-        "Failed to save. If you see a 404, this cap might be unlinked from its beer.",
-      );
-    },
+    // ... rest of the component
   });
 
   return (
