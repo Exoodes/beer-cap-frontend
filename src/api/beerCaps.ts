@@ -43,9 +43,14 @@ export const updateCap = async (
 export const updateBeer = async (
   beerId: number,
   capId: number,
-  data: { rating?: number; name?: string }
+  data: { 
+    rating?: number; 
+    name?: string; 
+    beer_brand_id?: number | null; 
+    country_id?: number | null 
+  }
 ): Promise<void> => {
   await client.patch(`/beers/${beerId}/`, data, {
-    params: { beer_cap_id: capId }, // This sends ?beer_cap_id=9
+    params: { beer_cap_id: capId },
   });
 };

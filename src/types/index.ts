@@ -1,6 +1,8 @@
+// src/types/index.ts
 export interface Country {
   id: number;
   name: string;
+  description?: string; // Added to fix 'description' property error
 }
 
 export interface BeerBrand {
@@ -13,8 +15,9 @@ export interface Beer {
   name: string;
   rating: number;
   country: Country | null;
-  beer_brand?: BeerBrand | null; 
+  beer_brand?: BeerBrand | null;
   brand?: BeerBrand | null;
+  caps?: { id: number }[]; // Added to help find a cap ID for beer updates
 }
 
 export interface BeerCap {
