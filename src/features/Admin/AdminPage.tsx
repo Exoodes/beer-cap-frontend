@@ -13,7 +13,6 @@ import {
   Stack,
   Table,
   Tabs,
-  Text,
   Textarea,
   TextInput,
   Title,
