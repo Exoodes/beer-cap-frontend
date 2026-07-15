@@ -10,6 +10,8 @@ interface BeerCapCardProps {
 }
 
 export function BeerCapCard({ cap, onDelete }: BeerCapCardProps) {
+  const isAdmin = !!localStorage.getItem("admin_token");
+
   return (
     <Card
       shadow="sm"
@@ -42,7 +44,7 @@ export function BeerCapCard({ cap, onDelete }: BeerCapCardProps) {
               {cap.beer.name}
             </Text>
           </Stack>
-          
+
           {cap.beer.rating && (
             <Badge
               color="yellow"
@@ -67,21 +69,23 @@ export function BeerCapCard({ cap, onDelete }: BeerCapCardProps) {
         )}
       </Stack>
 
-      <Button
-        color="red"
-        variant="light"
-        fullWidth
-        mt="md"
-        radius="md"
-        leftSection={<IconTrash size={16} />}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onDelete?.(cap.id);
-        }}
-      >
-        Delete
-      </Button>
+      {isAdmin && (
+        <Button
+          color="red"
+          variant="light"
+          fullWidth
+          mt="md"
+          radius="md"
+          leftSection={<IconTrash size={16} />}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onDelete?.(cap.id);
+          }}
+        >
+          Delete
+        </Button>
+      )}
     </Card>
   );
 }

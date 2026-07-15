@@ -37,6 +37,8 @@ export function CapDetailPage() {
   // Modal state for editing
   const [opened, { open, close }] = useDisclosure(false);
 
+  const isAdmin = !!localStorage.getItem("admin_token");
+
   // 1. Fetch Single Cap Data
   const {
     data: cap,
@@ -190,27 +192,28 @@ export function CapDetailPage() {
               </Stack>
             </Paper>
 
-            <Group mt="xl">
-              <Button
-                size="md"
-                variant="light"
-                onClick={open}
-                leftSection={<IconPencil size={16} />}
-              >
-                Edit Details
-              </Button>
-
-              <Button
-                size="md"
-                color="red"
-                variant="subtle"
-                onClick={handleDelete}
-                loading={deleteMutation.isPending}
-                leftSection={<IconTrash size={16} />}
-              >
-                Delete Cap
-              </Button>
-            </Group>
+            {isAdmin && (
+              <Group mt="xl">
+                <Button
+                  size="md"
+                  variant="light"
+                  onClick={open}
+                  leftSection={<IconPencil size={16} />}
+                >
+                  Edit Details
+                </Button>
+                <Button
+                  size="md"
+                  color="red"
+                  variant="subtle"
+                  onClick={handleDelete}
+                  loading={deleteMutation.isPending}
+                  leftSection={<IconTrash size={16} />}
+                >
+                  Delete Cap
+                </Button>
+              </Group>
+            )}
           </Stack>
         </Grid.Col>
       </Grid>

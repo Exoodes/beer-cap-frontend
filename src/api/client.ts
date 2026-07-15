@@ -9,6 +9,14 @@ export const client = axios.create({
   },
 });
 
+client.interceptors.request.use((config) => {
+  const token = localStorage.getItem("admin_token");
+  if (token) {
+    config.headers["X-Admin-Token"] = token;
+  }
+  return config;
+});
+
 client.interceptors.response.use(
   (response) => response,
   (error) => {
