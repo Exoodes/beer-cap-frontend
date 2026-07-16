@@ -71,3 +71,36 @@ export default defineConfig([
   },
 ])
 ```
+
+---
+
+## Local Development Setup
+
+This project uses [Vite](https://vitejs.dev/), React, and TypeScript. We enforce code quality using ESLint and Biome.
+
+### 1. Install Dependencies
+Make sure you have Node.js installed, then run:
+```bash
+npm install
+```
+
+### 2. VS Code Configuration
+
+To ensure your code is automatically formatted and linted on save, install the **Biome** and **ESLint** extensions. Then, ensure your `.vscode/settings.json` includes:
+
+```json
+{
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome",
+    "editor.formatOnSave": true
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "biomejs.biome",
+    "editor.formatOnSave": true
+  },
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports.biome": "explicit"
+  }
+}
+```
