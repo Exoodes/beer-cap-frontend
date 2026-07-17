@@ -38,7 +38,7 @@ export function ImageDropzone({ image, onDrop, onClear }: ImageDropzoneProps) {
   // 2. Otherwise, show the Dropzone
   return (
     <Dropzone
-      onDrop={(files) => onDrop(files[0])} 
+      onDrop={(files) => onDrop(files[0])}
       onReject={() => alert("File rejected! Make sure it is an image.")}
       maxSize={5 * 1024 * 1024}
       accept={IMAGE_MIME_TYPE}

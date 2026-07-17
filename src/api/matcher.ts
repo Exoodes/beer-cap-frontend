@@ -17,7 +17,7 @@ export interface BeerCapWithQueryResult {
 
 export const findSimilarCaps = async (
   imageFile: File,
-  topK = 5
+  topK = 5,
 ): Promise<BeerCapWithQueryResult[]> => {
   const formData = new FormData();
   formData.append("file", imageFile);
@@ -28,7 +28,7 @@ export const findSimilarCaps = async (
     {
       params: { top_k: topK },
       headers: { "Content-Type": "multipart/form-data" },
-    }
+    },
   );
 
   return response.data;

@@ -132,8 +132,14 @@ export function AddCapPage() {
     };
   });
 
-  const brandOptions = brands.map((b) => ({ value: b.id.toString(), label: b.name }));
-  const countryOptions = countries.map((c) => ({ value: c.id.toString(), label: c.name }));
+  const brandOptions = brands.map((b) => ({
+    value: b.id.toString(),
+    label: b.name,
+  }));
+  const countryOptions = countries.map((c) => ({
+    value: c.id.toString(),
+    label: c.name,
+  }));
 
   return (
     <Container size="sm" py="xl">
@@ -141,16 +147,28 @@ export function AddCapPage() {
 
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack gap="lg" pos="relative">
-          <LoadingOverlay visible={mutation.isPending} overlayProps={{ radius: "sm", blur: 2 }} />
+          <LoadingOverlay
+            visible={mutation.isPending}
+            overlayProps={{ radius: "sm", blur: 2 }}
+          />
 
           <Paper withBorder p="md" radius="md">
-            <Text fw={500} mb="xs">Cap Image *</Text>
+            <Text fw={500} mb="xs">
+              Cap Image *
+            </Text>
             <ImageDropzone
               image={file}
-              onDrop={(f) => { setFile(f); form.clearFieldError("file"); }}
+              onDrop={(f) => {
+                setFile(f);
+                form.clearFieldError("file");
+              }}
               onClear={() => setFile(null)}
             />
-            {form.errors.file && <Text c="red" size="sm" mt={4}>{form.errors.file}</Text>}
+            {form.errors.file && (
+              <Text c="red" size="sm" mt={4}>
+                {form.errors.file}
+              </Text>
+            )}
           </Paper>
 
           <Group grow>
@@ -211,7 +229,7 @@ export function AddCapPage() {
                       data={brandOptions}
                       searchable
                       required
-					  nothingFoundMessage="No brands found"
+                      nothingFoundMessage="No brands found"
                       {...form.getInputProps("brand_id")}
                     />
                   ) : (
@@ -237,7 +255,7 @@ export function AddCapPage() {
                       data={countryOptions}
                       searchable
                       required
-					  nothingFoundMessage="No countries found"
+                      nothingFoundMessage="No countries found"
                       {...form.getInputProps("country_id")}
                     />
                   ) : (
@@ -251,7 +269,9 @@ export function AddCapPage() {
                   <Switch
                     label="New?"
                     style={{ flexGrow: 0, marginBottom: 8 }}
-                    {...form.getInputProps("isNewCountry", { type: "checkbox" })}
+                    {...form.getInputProps("isNewCountry", {
+                      type: "checkbox",
+                    })}
                   />
                 </Group>
               </Stack>
@@ -259,8 +279,14 @@ export function AddCapPage() {
           </Paper>
 
           <Group justify="flex-end" mt="md">
-            <Button variant="default" onClick={() => navigate("/")}>Cancel</Button>
-            <Button type="submit" loading={mutation.isPending} leftSection={<IconCheck size={16} />}>
+            <Button variant="default" onClick={() => navigate("/")}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              loading={mutation.isPending}
+              leftSection={<IconCheck size={16} />}
+            >
               Save Cap
             </Button>
           </Group>

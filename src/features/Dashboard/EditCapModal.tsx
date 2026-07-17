@@ -47,7 +47,7 @@ export function EditCapModal({ opened, close, cap }: EditCapModalProps) {
           : null,
       });
     }
-  }, [opened, cap]);
+  }, [opened, cap, form.setValues]);
 
   const mutation = useMutation({
     mutationFn: async (values: typeof form.values) => {

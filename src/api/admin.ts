@@ -5,20 +5,30 @@ export interface StatusResponse {
   message: string;
 }
 
-export const generateAllAugmentations = async (count: number): Promise<StatusResponse> => {
-  const response = await client.post<StatusResponse>("/augmented_caps/generate_all/", null, {
-    params: { augmentations_per_image: count },
-  });
+export const generateAllAugmentations = async (
+  count: number,
+): Promise<StatusResponse> => {
+  const response = await client.post<StatusResponse>(
+    "/augmented_caps/generate_all/",
+    null,
+    {
+      params: { augmentations_per_image: count },
+    },
+  );
   return response.data;
 };
 
 export const generateEmbeddings = async (): Promise<StatusResponse> => {
-  const response = await client.post<StatusResponse>("/augmented_caps/generate_embeddings/");
+  const response = await client.post<StatusResponse>(
+    "/augmented_caps/generate_embeddings/",
+  );
   return response.data;
 };
 
 export const generateIndex = async (): Promise<StatusResponse> => {
-  const response = await client.post<StatusResponse>("/augmented_caps/generate_index/");
+  const response = await client.post<StatusResponse>(
+    "/augmented_caps/generate_index/",
+  );
   return response.data;
 };
 

@@ -1,5 +1,12 @@
 import { useEffect } from "react";
-import { BrowserRouter, Route, Routes, Navigate, useNavigate, useLocation } from "react-router-dom";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { AdminPage } from "./features/Admin/AdminPage";
 import { AddCapPage } from "./features/Dashboard/AddCapPage";
@@ -41,15 +48,30 @@ function App() {
           <Route element={<Layout />}>
             <Route path="/" element={<DashboardPage />} />
 
-            <Route path="/add" element={
-              <ProtectedRoute><AddCapPage /></ProtectedRoute>
-            } />
-            <Route path="/match" element={
-              <ProtectedRoute><MatcherPage /></ProtectedRoute>
-            } />
-            <Route path="/admin" element={
-              <ProtectedRoute><AdminPage /></ProtectedRoute>
-            } />
+            <Route
+              path="/add"
+              element={
+                <ProtectedRoute>
+                  <AddCapPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/match"
+              element={
+                <ProtectedRoute>
+                  <MatcherPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              }
+            />
           </Route>
 
           <Route path="/cap/:id" element={<CapDetailPage />} />
