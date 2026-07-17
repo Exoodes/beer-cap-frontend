@@ -7,7 +7,10 @@ export const getCountries = async (): Promise<Country[]> => {
   return response.data;
 };
 
-export const createCountry = async (name: string, description: string): Promise<Country> => {
+export const createCountry = async (
+  name: string,
+  description: string,
+): Promise<Country> => {
   const formData = new FormData();
   formData.append("name", name);
   formData.append("description", description);
@@ -15,7 +18,10 @@ export const createCountry = async (name: string, description: string): Promise<
   return response.data;
 };
 
-export const updateCountry = async (id: number, data: { name?: string; description?: string }): Promise<Country> => {
+export const updateCountry = async (
+  id: number,
+  data: { name?: string; description?: string },
+): Promise<Country> => {
   const response = await client.patch<Country>(`/countries/${id}/`, data);
   return response.data;
 };
@@ -36,7 +42,10 @@ export const createBrand = async (name: string): Promise<BeerBrand> => {
   return response.data;
 };
 
-export const updateBrand = async (id: number, data: { name: string }): Promise<BeerBrand> => {
+export const updateBrand = async (
+  id: number,
+  data: { name: string },
+): Promise<BeerBrand> => {
   const response = await client.patch<BeerBrand>(`/beer_brands/${id}/`, data);
   return response.data;
 };
@@ -47,7 +56,11 @@ export const deleteBrand = async (id: number): Promise<void> => {
 
 export const getBeers = async (): Promise<Beer[]> => {
   const response = await client.get<Beer[]>("/beers/", {
-    params: { include_beer_brand: true, include_caps: true, include_country: true }
+    params: {
+      include_beer_brand: true,
+      include_caps: true,
+      include_country: true,
+    },
   });
   return response.data;
 };
