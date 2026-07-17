@@ -106,11 +106,11 @@ export function AdminPage() {
         country_id: editingBeer.country?.id?.toString() || null,
       });
     }
-  }, [editingBeer]);
+  }, [editingBeer, editBeerForm.setValues]);
 
   useEffect(() => {
     if (editingBrand) editBrandForm.setValues({ name: editingBrand.name });
-  }, [editingBrand]);
+  }, [editingBrand, editBrandForm.setValues]);
 
   useEffect(() => {
     if (editingCountry)
@@ -118,7 +118,7 @@ export function AdminPage() {
         name: editingCountry.name,
         description: editingCountry.description || "",
       });
-  }, [editingCountry]);
+  }, [editingCountry, editCountryForm.setValues]);
 
   const mutationAug = useMutation({ mutationFn: generateAllAugmentations });
   const mutationEmb = useMutation({ mutationFn: generateEmbeddings });
@@ -447,9 +447,9 @@ export function AdminPage() {
                 name: v.name,
                 rating: v.rating,
                 beer_brand_id: v.beer_brand_id
-                  ? parseInt(v.beer_brand_id)
+                  ? parseInt(v.beer_brand_id, 10)
                   : null,
-                country_id: v.country_id ? parseInt(v.country_id) : null,
+                country_id: v.country_id ? parseInt(v.country_id, 10) : null,
               });
             }
           })}
