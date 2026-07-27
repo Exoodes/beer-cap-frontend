@@ -20,6 +20,7 @@ import {
 import { useForm } from "@mantine/form";
 import {
   IconAlertCircle,
+  IconArchive,
   IconCertificate,
   IconDatabase,
   IconEdit,
@@ -35,6 +36,7 @@ import {
   generateEmbeddings,
   generateIndex,
 } from "../../api/admin";
+import { createBackup, deleteBackup, getBackups } from "../../api/backups";
 import { updateBeer } from "../../api/beerCaps";
 import {
   createBrand,
@@ -57,6 +59,29 @@ export function AdminPage() {
   const [editingBeer, setEditingBeer] = useState<Beer | null>(null);
   const [editingBrand, setEditingBrand] = useState<BeerBrand | null>(null);
   const [editingCountry, setEditingCountry] = useState<Country | null>(null);
+
+  const { data: backups = [], isLoading: isLoadingBackups } = useQuery({
+    queryKey: ["backups"],
+    queryFn: getBackups,
+  });
+
+  const createBackupMut = useMutation({
+    mutationFn: createBackup,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["backups"] }),
+  });
+
+  const deleteBackupMut = useMutation({
+    mutationFn: deleteBackup,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["backups"] }),
+  });
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
 
   const { data: beers = [] } = useQuery({
     queryKey: ["beers"],
@@ -225,6 +250,9 @@ export function AdminPage() {
           </Tabs.Tab>
           <Tabs.Tab value="countries" leftSection={<IconWorld size={16} />}>
             Countries
+          </Tabs.Tab>
+          <Tabs.Tab value="backups" leftSection={<IconArchive size={16} />}>
+            Backups
           </Tabs.Tab>
         </Tabs.List>
 
@@ -426,6 +454,84 @@ export function AdminPage() {
                   </Table.Td>
                 </Table.Tr>
               ))}
+            </Table.Tbody>
+          </Table>
+        </Tabs.Panel>
+
+        <Tabs.Panel value="backups">
+          <Paper withBorder p="md" mb="xl" bg="gray.0">
+            <Group justify="space-between">
+              <div>
+                <Title order={4}>Manual Backups</Title>
+                <Alert
+                  icon={<IconAlertCircle size={16} />}
+                  title="Note"
+                  color="blue"
+                  mt="xs"
+                >
+                  Backups are saved safely to the host disk. S3 Buckets are
+                  saved as folders, databases as SQL archives.
+                </Alert>
+              </div>
+              <Button
+                loading={createBackupMut.isPending}
+                onClick={() => createBackupMut.mutate()}
+                leftSection={<IconPlus size={16} />}
+              >
+                Trigger Full Backup
+              </Button>
+            </Group>
+          </Paper>
+
+          <Table striped>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>Name</Table.Th>
+                <Table.Th>Type</Table.Th>
+                <Table.Th>Size</Table.Th>
+                <Table.Th>Created At</Table.Th>
+                <Table.Th>Actions</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {backups.map((backup) => (
+                <Table.Tr key={backup.name}>
+                  <Table.Td>{backup.name}</Table.Td>
+                  <Table.Td>
+                    <Badge
+                      color={backup.is_dir ? "blue" : "grape"}
+                      variant="light"
+                    >
+                      {backup.is_dir ? "MinIO Images" : "Postgres Dump"}
+                    </Badge>
+                  </Table.Td>
+                  <Table.Td>{formatBytes(backup.size)}</Table.Td>
+                  <Table.Td>
+                    {new Date(backup.created_at).toLocaleString()}
+                  </Table.Td>
+                  <Table.Td>
+                    <ActionIcon
+                      variant="subtle"
+                      color="red"
+                      onClick={() =>
+                        handleConfirmDelete("Backup", backup.name, () =>
+                          deleteBackupMut.mutate(backup.name),
+                        )
+                      }
+                      loading={deleteBackupMut.isPending}
+                    >
+                      <IconTrash size={16} />
+                    </ActionIcon>
+                  </Table.Td>
+                </Table.Tr>
+              ))}
+              {backups.length === 0 && !isLoadingBackups && (
+                <Table.Tr>
+                  <Table.Td colSpan={5} align="center">
+                    No backups found.
+                  </Table.Td>
+                </Table.Tr>
+              )}
             </Table.Tbody>
           </Table>
         </Tabs.Panel>
