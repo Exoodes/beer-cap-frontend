@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import type { BeerCap } from "../types";
 import { getImageUrl } from "../utils/imageUtils";
 
+const PLACEHOLDER_IMAGE = "https://placehold.co/600x400?text=No+Image";
+
 interface BeerCapCardProps {
   cap: BeerCap;
   onDelete?: (id: number) => void;
@@ -24,11 +26,16 @@ export function BeerCapCard({ cap, onDelete }: BeerCapCardProps) {
     >
       <Card.Section>
         <Image
-          src={getImageUrl(cap.presigned_url)}
+          src={getImageUrl(cap.thumbnail_url ?? cap.presigned_url)}
           height={160}
           alt={cap.beer.name}
           loading="lazy"
-          fallbackSrc="https://placehold.co/600x400?text=No+Image"
+          // If the thumbnail can't load, show the full image instead.
+          fallbackSrc={
+            cap.thumbnail_url
+              ? getImageUrl(cap.presigned_url)
+              : PLACEHOLDER_IMAGE
+          }
         />
       </Card.Section>
 

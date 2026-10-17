@@ -529,9 +529,14 @@ export interface components {
             collected_date?: string | null;
             /**
              * Presigned Url
-             * @description Temporary URL to access the beer cap image
+             * @description URL of the full-size image (named for compatibility; a plain, stable URL unless PUBLIC_IMAGE_URLS is off)
              */
             presigned_url: string;
+            /**
+             * Thumbnail Url
+             * @description URL of a small WebP preview; null until one is generated
+             */
+            thumbnail_url?: string | null;
             /** @description Beer to which this cap belongs */
             beer: components["schemas"]["BeerResponseBase"];
         };
