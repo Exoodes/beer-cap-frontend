@@ -1,6 +1,7 @@
 // Dashboard search, filtering and sorting. Pure functions over the cap list,
 // with the filter state stored in the URL query string.
 import type { BeerCap } from "../../types";
+import { matchesWords } from "../../utils/search";
 
 export const SORT_OPTIONS = [
   { value: "recent", label: "Recently added" },
@@ -46,25 +47,15 @@ const collator = new Intl.Collator("cs", {
   numeric: true,
 });
 
-/** Lowercases and strips diacritics, so "kvasnicove" matches "Kvasnicové". */
-export function normalize(text: string): string {
-  return text
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase();
-}
-
 function searchText(cap: BeerCap): string {
-  return normalize(
-    [
-      cap.beer.name,
-      cap.beer.beer_brand?.name,
-      cap.beer.country?.name,
-      cap.variant_name,
-    ]
-      .filter(Boolean)
-      .join(" "),
-  );
+  return [
+    cap.beer.name,
+    cap.beer.beer_brand?.name,
+    cap.beer.country?.name,
+    cap.variant_name,
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 function countryKey(cap: BeerCap): string {
@@ -107,7 +98,6 @@ export function filterAndSortCaps(
   caps: BeerCap[],
   filters: CapFilters,
 ): BeerCap[] {
-  const words = normalize(filters.q).split(/\s+/).filter(Boolean);
   const countries = new Set(filters.countries);
   const brands = new Set(filters.brands);
 
@@ -115,10 +105,7 @@ export function filterAndSortCaps(
     if (countries.size && !countries.has(countryKey(cap))) return false;
     if (brands.size && !brands.has(brandKey(cap))) return false;
     if (!matchesRating(cap.beer.rating ?? 0, filters.rating)) return false;
-    if (words.length) {
-      const text = searchText(cap);
-      if (!words.every((word) => text.includes(word))) return false;
-    }
+    if (filters.q && !matchesWords(searchText(cap), filters.q)) return false;
     return true;
   });
 
