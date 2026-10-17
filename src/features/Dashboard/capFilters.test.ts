@@ -201,7 +201,7 @@ describe("groupCaps", () => {
     ]);
   });
 
-  it("groups by brewery", () => {
+  it("groups by brand", () => {
     expect(groupCaps(sorted, "brand").map((g) => g.title)).toEqual([
       "Bernard",
       "Černá Hora",

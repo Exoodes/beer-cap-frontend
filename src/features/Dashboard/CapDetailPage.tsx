@@ -32,8 +32,8 @@ import classes from "./CapDetailPage.module.css";
 import { type CapListState, capIdsFrom, collectionPath } from "./capNavigation";
 import { EditCapModal } from "./EditCapModal";
 
-/** How many caps of the same brewery to show before linking to them all. */
-const MORE_FROM_BREWERY = 10;
+/** How many caps of the same brand to show before linking to them all. */
+const MORE_FROM_BRAND = 10;
 
 export function CapDetailPage() {
   const { id: idParam } = useParams();
@@ -250,9 +250,9 @@ export function CapDetailPage() {
       {brand && sameBrand.length > 0 && (
         <RelatedCaps
           title={`More from ${brand.name}`}
-          caps={sameBrand.slice(0, MORE_FROM_BREWERY)}
+          caps={sameBrand.slice(0, MORE_FROM_BRAND)}
           footer={
-            sameBrand.length > MORE_FROM_BREWERY && (
+            sameBrand.length > MORE_FROM_BRAND && (
               <Anchor component={Link} to={`/?brand=${brand.id}`} size="sm">
                 All {pluralCaps(sameBrand.length + sameBeer.length + 1)} from{" "}
                 {brand.name}

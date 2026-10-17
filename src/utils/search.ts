@@ -6,6 +6,12 @@ import type {
   OptionsFilter,
 } from "@mantine/core";
 
+/** Czech alphabetical order (Č after C), with numbers compared as numbers. */
+export const collator = new Intl.Collator("cs", {
+  sensitivity: "base",
+  numeric: true,
+});
+
 /** Lowercases and strips diacritics, so "kvasnicove" matches "Kvasnicové". */
 export function normalize(text: string): string {
   return text

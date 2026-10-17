@@ -1,7 +1,7 @@
 // Dashboard search, filtering and sorting. Pure functions over the cap list,
 // with the filter state stored in the URL query string.
 import type { BeerCap } from "../../types";
-import { matchesWords } from "../../utils/search";
+import { collator, matchesWords } from "../../utils/search";
 
 export const SORT_OPTIONS = [
   { value: "recent", label: "Recently added" },
@@ -26,7 +26,7 @@ export type RatingFilter = (typeof RATING_OPTIONS)[number]["value"] | null;
 export const GROUP_OPTIONS = [
   { value: "none", label: "All" },
   { value: "country", label: "Country" },
-  { value: "brand", label: "Brewery" },
+  { value: "brand", label: "Brand" },
 ] as const;
 
 export type GroupKey = (typeof GROUP_OPTIONS)[number]["value"];
@@ -51,11 +51,6 @@ export const DEFAULT_FILTERS: CapFilters = {
   sort: "recent",
   group: "none",
 };
-
-const collator = new Intl.Collator("cs", {
-  sensitivity: "base",
-  numeric: true,
-});
 
 function searchText(cap: BeerCap): string {
   return [
@@ -172,7 +167,7 @@ export interface CapGroup {
 }
 
 /**
- * Splits the (already sorted) caps into sections by country or brewery,
+ * Splits the (already sorted) caps into sections by country or brand,
  * in alphabetical order with "No country" last. Order inside a section
  * is kept.
  */

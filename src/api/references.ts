@@ -79,3 +79,20 @@ export const getBeers = async (): Promise<Beer[]> => {
 export const deleteBeer = async (id: number): Promise<void> => {
   await client.delete(`/beers/${id}/`);
 };
+
+/** Folds a duplicate into another entry; the duplicate is deleted. */
+const merge = async (kind: string, id: number, intoId: number) => {
+  await client.post(`/${kind}/${id}/merge/`, { into_id: intoId });
+};
+
+/** Moves the beer's caps to `intoId`, then deletes the beer. */
+export const mergeBeer = (id: number, intoId: number) =>
+  merge("beers", id, intoId);
+
+/** Moves the brand's beers to `intoId` (joining same-named beers). */
+export const mergeBrand = (id: number, intoId: number) =>
+  merge("beer_brands", id, intoId);
+
+/** Moves the country's beers to `intoId`, then deletes the country. */
+export const mergeCountry = (id: number, intoId: number) =>
+  merge("countries", id, intoId);
