@@ -15,12 +15,10 @@ import {
 import { IconSearch, IconX } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import {
-  type BeerCapWithQueryResult,
-  findSimilarCaps,
-} from "../../api/matcher";
+import { findSimilarCaps } from "../../api/matcher";
 import { BeerCapCard } from "../../components/BeerCapCard";
 import { ImageDropzone } from "../../components/ImageDropzone";
+import type { BeerCapWithQueryResult } from "../../types";
 
 export function MatcherPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -30,10 +28,6 @@ export function MatcherPage() {
     mutationFn: (image: File) => findSimilarCaps(image),
     onSuccess: (data) => {
       setResults(data);
-    },
-    onError: (error) => {
-      console.error("Match failed:", error);
-      alert("Failed to find similar caps.");
     },
   });
 

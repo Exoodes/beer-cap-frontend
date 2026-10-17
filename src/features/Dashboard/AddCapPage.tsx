@@ -23,6 +23,7 @@ import { useNavigate } from "react-router-dom";
 import { createCap } from "../../api/beerCaps";
 import { getBeers, getBrands, getCountries } from "../../api/references";
 import { ImageDropzone } from "../../components/ImageDropzone";
+import { notifySuccess } from "../../utils/notify";
 
 export function AddCapPage() {
   const navigate = useNavigate();
@@ -47,7 +48,7 @@ export function AddCapPage() {
   const form = useForm({
     initialValues: {
       variant_name: "",
-      collected_date: null as Date | null,
+      collected_date: null as string | null, // "YYYY-MM-DD"
       isNewBeer: false,
       isNewBrand: false,
       isNewCountry: false,
@@ -86,11 +87,11 @@ export function AddCapPage() {
     mutationFn: createCap,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["beerCaps"] });
+      queryClient.invalidateQueries({ queryKey: ["beers"] });
+      queryClient.invalidateQueries({ queryKey: ["brands"] });
+      queryClient.invalidateQueries({ queryKey: ["countries"] });
+      notifySuccess("Cap added.");
       navigate("/");
-    },
-    onError: (err) => {
-      alert("Failed to create cap. See console for details.");
-      console.error(err);
     },
   });
 
@@ -101,8 +102,7 @@ export function AddCapPage() {
     if (values.variant_name)
       formData.append("variant_name", values.variant_name);
     if (values.collected_date) {
-      const dateObj = new Date(values.collected_date);
-      formData.append("collected_date", dateObj.toISOString().split("T")[0]);
+      formData.append("collected_date", values.collected_date);
     }
     if (values.isNewBeer) {
       formData.append("beer_name", values.beer_name);
@@ -125,7 +125,7 @@ export function AddCapPage() {
 
   // UPDATED: Combined Beer and Brand label for the dropdown
   const beerOptions = beers.map((b) => {
-    const brandName = b.brand?.name || b.beer_brand?.name || "Unknown Brand";
+    const brandName = b.beer_brand?.name ?? "Unknown Brand";
     return {
       value: b.id.toString(),
       label: `${b.name} (${brandName})`,
@@ -181,6 +181,7 @@ export function AddCapPage() {
               label="Collected Date"
               placeholder="Pick date"
               clearable
+              valueFormat="YYYY-MM-DD"
               maxDate={new Date()}
               {...form.getInputProps("collected_date")}
             />

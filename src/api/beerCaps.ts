@@ -1,4 +1,4 @@
-import type { BeerCap } from "../types";
+import type { BeerCap, BeerCapUpdate, BeerUpdate } from "../types";
 import { client } from "./client";
 
 export const getAllCaps = async (): Promise<BeerCap[]> => {
@@ -20,37 +20,25 @@ export const deleteCap = async (id: number): Promise<void> => {
   await client.delete(`/beer_caps/${id}/`);
 };
 
-// We use FormData because we are uploading a file
+/** Multipart upload: the image file plus the form fields of the new cap. */
 export const createCap = async (formData: FormData): Promise<BeerCap> => {
-  const response = await client.post<BeerCap>("/beer_caps/", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  const response = await client.post<BeerCap>("/beer_caps/", formData);
   return response.data;
 };
 
+/** Omitted fields are kept; `null` clears a nullable field. */
 export const updateCap = async (
   id: number,
-  data: {
-    variant_name?: string;
-    collected_date?: string | null;
-    beer_id?: number; // 👈 Add this
-  },
+  data: BeerCapUpdate,
 ): Promise<BeerCap> => {
   const response = await client.patch<BeerCap>(`/beer_caps/${id}/`, data);
   return response.data;
 };
 
+/** Omitted fields are kept; `null` clears `country_id`. */
 export const updateBeer = async (
   beerId: number,
-  capId: number,
-  data: {
-    rating?: number;
-    name?: string;
-    beer_brand_id?: number | null;
-    country_id?: number | null;
-  },
+  data: BeerUpdate,
 ): Promise<void> => {
-  await client.patch(`/beers/${beerId}/`, data, {
-    params: { beer_cap_id: capId },
-  });
+  await client.patch(`/beers/${beerId}/`, data);
 };

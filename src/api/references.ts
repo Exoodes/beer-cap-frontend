@@ -1,28 +1,34 @@
 // src/api/references.ts
-import type { Beer, BeerBrand, Country } from "../types";
+import type {
+  Beer,
+  BeerBrandUpdate,
+  BeerBrandWithBeers,
+  CountryCreate,
+  CountryUpdate,
+  CountryWithBeers,
+} from "../types";
 import { client } from "./client";
 
-export const getCountries = async (): Promise<Country[]> => {
-  const response = await client.get<Country[]>("/countries/");
+export const getCountries = async (): Promise<CountryWithBeers[]> => {
+  const response = await client.get<CountryWithBeers[]>("/countries/");
   return response.data;
 };
 
 export const createCountry = async (
-  name: string,
-  description: string,
-): Promise<Country> => {
-  const formData = new FormData();
-  formData.append("name", name);
-  formData.append("description", description);
-  const response = await client.post<Country>("/countries/", formData);
+  data: CountryCreate,
+): Promise<CountryWithBeers> => {
+  const response = await client.post<CountryWithBeers>("/countries/", data);
   return response.data;
 };
 
 export const updateCountry = async (
   id: number,
-  data: { name?: string; description?: string },
-): Promise<Country> => {
-  const response = await client.patch<Country>(`/countries/${id}/`, data);
+  data: CountryUpdate,
+): Promise<CountryWithBeers> => {
+  const response = await client.patch<CountryWithBeers>(
+    `/countries/${id}/`,
+    data,
+  );
   return response.data;
 };
 
@@ -30,23 +36,28 @@ export const deleteCountry = async (id: number): Promise<void> => {
   await client.delete(`/countries/${id}/`);
 };
 
-export const getBrands = async (): Promise<BeerBrand[]> => {
-  const response = await client.get<BeerBrand[]>("/beer_brands/");
+export const getBrands = async (): Promise<BeerBrandWithBeers[]> => {
+  const response = await client.get<BeerBrandWithBeers[]>("/beer_brands/");
   return response.data;
 };
 
-export const createBrand = async (name: string): Promise<BeerBrand> => {
-  const formData = new FormData();
-  formData.append("name", name);
-  const response = await client.post<BeerBrand>("/beer_brands/", formData);
+export const createBrand = async (
+  name: string,
+): Promise<BeerBrandWithBeers> => {
+  const response = await client.post<BeerBrandWithBeers>("/beer_brands/", {
+    name,
+  });
   return response.data;
 };
 
 export const updateBrand = async (
   id: number,
-  data: { name: string },
-): Promise<BeerBrand> => {
-  const response = await client.patch<BeerBrand>(`/beer_brands/${id}/`, data);
+  data: BeerBrandUpdate,
+): Promise<BeerBrandWithBeers> => {
+  const response = await client.patch<BeerBrandWithBeers>(
+    `/beer_brands/${id}/`,
+    data,
+  );
   return response.data;
 };
 

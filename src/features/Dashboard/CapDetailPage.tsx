@@ -27,10 +27,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { deleteCap, getCapById } from "../../api/beerCaps";
 import { getImageUrl } from "../../utils/imageUtils";
+import { notifySuccess } from "../../utils/notify";
 import { EditCapModal } from "./EditCapModal";
 
 export function CapDetailPage() {
-  const { id } = useParams();
+  const { id: idParam } = useParams();
+  const id = Number(idParam);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -45,9 +47,10 @@ export function CapDetailPage() {
     isLoading,
     isError,
   } = useQuery({
+    // Numeric id, matching the key EditCapModal invalidates.
     queryKey: ["beerCap", id],
-    queryFn: () => getCapById(Number(id)),
-    enabled: !!id,
+    queryFn: () => getCapById(id),
+    enabled: Number.isInteger(id) && id > 0,
   });
 
   // 2. Delete Mutation
@@ -56,11 +59,8 @@ export function CapDetailPage() {
     onSuccess: () => {
       // Refresh the dashboard list so the deleted item is gone
       queryClient.invalidateQueries({ queryKey: ["beerCaps"] });
-      // Navigate back to home
+      notifySuccess("Cap deleted.");
       navigate("/");
-    },
-    onError: () => {
-      alert("Failed to delete cap");
     },
   });
 
@@ -70,7 +70,7 @@ export function CapDetailPage() {
         "Are you sure you want to delete this cap? This cannot be undone.",
       )
     ) {
-      deleteMutation.mutate(Number(id));
+      deleteMutation.mutate(id);
     }
   };
 
@@ -166,12 +166,8 @@ export function CapDetailPage() {
                     <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
                       Brand
                     </Text>
-                    {/* Try to display brand if available in the type */}
                     <Text fw={500}>
-                      {/* Now this won't error */}
-                      {cap.beer.beer_brand?.name ||
-                        cap.beer.brand?.name ||
-                        "Unknown Brand"}
+                      {cap.beer.beer_brand?.name ?? "Unknown Brand"}
                     </Text>
                   </div>
                 </Group>
