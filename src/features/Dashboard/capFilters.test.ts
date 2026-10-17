@@ -9,7 +9,6 @@ import {
   filtersToParams,
   hasActiveFilters,
   NO_COUNTRY,
-  normalize,
 } from "./capFilters";
 
 const CZ = { id: 1, name: "Česká republika" };
@@ -60,14 +59,6 @@ const CAPS = [
 const ids = (caps: BeerCap[]) => caps.map((c) => c.id);
 const run = (filters: Partial<CapFilters>) =>
   ids(filterAndSortCaps(CAPS, { ...DEFAULT_FILTERS, ...filters }));
-
-describe("normalize", () => {
-  it("strips diacritics and lowercases", () => {
-    expect(normalize("Kvasnicové Černá ŽLUŤOUČKÝ")).toBe(
-      "kvasnicove cerna zlutoucky",
-    );
-  });
-});
 
 describe("search", () => {
   it("ignores accents and case", () => {

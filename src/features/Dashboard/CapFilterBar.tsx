@@ -16,6 +16,7 @@ import {
   IconFilterOff,
   IconSearch,
 } from "@tabler/icons-react";
+import { wordFilter } from "../../utils/search";
 import {
   type CapFilters,
   type FacetOption,
@@ -80,6 +81,7 @@ export function CapFilterBar({
           value={filters.countries}
           onChange={(countries) => onChange({ countries })}
           searchable
+          filter={wordFilter}
           clearable
           hidePickedOptions
           nothingFoundMessage="No such country"
@@ -93,6 +95,7 @@ export function CapFilterBar({
           value={filters.brands}
           onChange={(brands) => onChange({ brands })}
           searchable
+          filter={wordFilter}
           clearable
           hidePickedOptions
           nothingFoundMessage="No such brand"

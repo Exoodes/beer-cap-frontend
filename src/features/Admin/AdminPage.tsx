@@ -53,6 +53,7 @@ import {
 import { useMatchingEnabled } from "../../hooks/useMatchingEnabled";
 import type { Beer, BeerBrandWithBeers, CountryWithBeers } from "../../types";
 import { notifySuccess } from "../../utils/notify";
+import { wordFilter } from "../../utils/search";
 
 export function AdminPage() {
   const queryClient = useQueryClient();
@@ -600,6 +601,7 @@ function EditBeerForm({
           placeholder="Select Brand"
           data={brands.map((b) => ({ value: b.id.toString(), label: b.name }))}
           searchable
+          filter={wordFilter}
           {...form.getInputProps("beer_brand_id")}
         />
         <Select
@@ -610,6 +612,7 @@ function EditBeerForm({
             label: c.name,
           }))}
           searchable
+          filter={wordFilter}
           clearable
           {...form.getInputProps("country_id")}
         />

@@ -26,6 +26,7 @@ import { getBeers, getBrands, getCountries } from "../../api/references";
 import { ImageDropzone } from "../../components/ImageDropzone";
 import { notifyError, notifySuccess } from "../../utils/notify";
 import { prepareImageForUpload } from "../../utils/prepareImage";
+import { beerLabel, createWordFilter, wordFilter } from "../../utils/search";
 
 export function AddCapPage() {
   const navigate = useNavigate();
@@ -152,14 +153,20 @@ export function AddCapPage() {
     });
   };
 
-  // UPDATED: Combined Beer and Brand label for the dropdown
-  const beerOptions = beers.map((b) => {
-    const brandName = b.beer_brand?.name ?? "Unknown Brand";
-    return {
-      value: b.id.toString(),
-      label: `${b.name} (${brandName})`,
-    };
-  });
+  const beerOptions = beers.map((b) => ({
+    value: b.id.toString(),
+    label: beerLabel(b.name, b.beer_brand?.name),
+  }));
+  // A beer is also found by its brand and country, not only its name.
+  const beerSearchText = new Map(
+    beers.map((b) => [
+      b.id.toString(),
+      [b.name, b.beer_brand?.name, b.country?.name].filter(Boolean).join(" "),
+    ]),
+  );
+  const beerFilter = createWordFilter(
+    (item) => beerSearchText.get(item.value) ?? item.label,
+  );
 
   const brandOptions = brands.map((b) => ({
     value: b.id.toString(),
@@ -232,6 +239,7 @@ export function AddCapPage() {
                 placeholder="Search for a beer..."
                 data={beerOptions}
                 searchable
+                filter={beerFilter}
                 nothingFoundMessage="No beers found"
                 {...form.getInputProps("beer_id")}
               />
@@ -259,6 +267,7 @@ export function AddCapPage() {
                       placeholder="Select Brand"
                       data={brandOptions}
                       searchable
+                      filter={wordFilter}
                       required
                       nothingFoundMessage="No brands found"
                       {...form.getInputProps("brand_id")}
@@ -285,6 +294,7 @@ export function AddCapPage() {
                       placeholder="Select Country"
                       data={countryOptions}
                       searchable
+                      filter={wordFilter}
                       required
                       nothingFoundMessage="No countries found"
                       {...form.getInputProps("country_id")}
