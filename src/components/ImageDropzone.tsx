@@ -202,7 +202,8 @@ export function ImageDropzone({
             Drag image here or click to select
           </Text>
           <Text size="sm" c="dimmed" inline mt={7}>
-            One photo of the cap: JPEG, PNG or WebP
+            Fill the frame with the cap, on a plain background. JPEG, PNG or
+            WebP.
           </Text>
         </div>
       </Group>

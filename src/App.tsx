@@ -11,8 +11,8 @@ import {
 } from "react-router-dom";
 import { useAdmin } from "./admin/adminContext";
 import { Layout } from "./components/Layout";
+import { AddCapPage } from "./features/AddCap/AddCapPage";
 import { AdminPage } from "./features/Admin/AdminPage";
-import { AddCapPage } from "./features/Dashboard/AddCapPage";
 import { CapDetailPage } from "./features/Dashboard/CapDetailPage";
 import { DashboardPage } from "./features/Dashboard/DashboardPage";
 import { MatcherPage } from "./features/Dashboard/MatcherPage";
