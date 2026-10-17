@@ -35,7 +35,7 @@ ReactDOM.createRoot(root).render(
     <MantineProvider
       theme={theme}
       cssVariablesResolver={cssVariablesResolver}
-      defaultColorScheme="light"
+      forceColorScheme="dark"
     >
       <Notifications position="top-right" />
       <QueryClientProvider client={queryClient}>

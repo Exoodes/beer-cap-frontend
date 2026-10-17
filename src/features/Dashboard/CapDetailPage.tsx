@@ -1,12 +1,11 @@
 import {
   ActionIcon,
   Anchor,
-  Button,
   Group,
-  Skeleton,
   Stack,
   Text,
   Title,
+  UnstyledButton,
 } from "@mantine/core";
 import { useDisclosure, useHotkeys } from "@mantine/hooks";
 import {
@@ -21,7 +20,7 @@ import { type ReactNode, useMemo } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useAdmin } from "../../admin/adminContext";
 import { deleteCap, getAllCaps, getCapById } from "../../api/beerCaps";
-import { CapCircle } from "../../components/CapCircle";
+import { CapCircle, CapSocket } from "../../components/CapCircle";
 import { CapGrid, CapTile } from "../../components/CapTile";
 import type { BeerCap } from "../../types";
 import { confirmDelete } from "../../utils/confirm";
@@ -29,7 +28,12 @@ import { formatDate, pluralCaps } from "../../utils/format";
 import { getImageUrl } from "../../utils/imageUtils";
 import { notifySuccess } from "../../utils/notify";
 import classes from "./CapDetailPage.module.css";
-import { type CapListState, capIdsFrom, collectionPath } from "./capNavigation";
+import {
+  type CapListState,
+  capIdsFrom,
+  capTransitionName,
+  collectionPath,
+} from "./capNavigation";
 import { EditCapModal } from "./EditCapModal";
 
 /** How many caps of the same brand to show before linking to them all. */
@@ -93,22 +97,20 @@ export function CapDetailPage() {
   });
 
   const backLink = (
-    <Anchor component={Link} to={backTo} className={classes.back}>
-      <IconArrowLeft size={16} />
-      Back to collection
-    </Anchor>
+    <Link to={backTo} viewTransition className={classes.back}>
+      <IconArrowLeft size={20} stroke={2.2} />
+      Collection
+    </Link>
   );
 
   if (isLoading) {
     return (
       <Stack gap="lg">
         {backLink}
-        <div className={classes.layout}>
-          <Skeleton circle className={classes.skeleton} />
-          <Stack>
-            <Skeleton height={16} width="30%" />
-            <Skeleton height={40} width="70%" />
-          </Stack>
+        <div className={classes.stage}>
+          <div className={classes.capColumn}>
+            <CapSocket deep transitionName={capTransitionName(id)} />
+          </div>
         </div>
       </Stack>
     );
@@ -143,66 +145,73 @@ export function CapDetailPage() {
     });
   };
 
+  const hasNeighbours = index >= 0 && order.length > 1;
+  const position = hasNeighbours && (
+    <span className={classes.position}>
+      {index + 1} of {order.length}
+    </span>
+  );
+  const stepButton = (direction: "previous" | "next", className: string) => {
+    const target = direction === "previous" ? previousId : nextId;
+    return (
+      <ActionIcon
+        variant="default"
+        size={56}
+        radius="xl"
+        aria-label={direction === "previous" ? "Previous cap" : "Next cap"}
+        disabled={target === undefined}
+        onClick={() => goTo(target)}
+        className={className}
+      >
+        {direction === "previous" ? (
+          <IconChevronLeft size={24} stroke={2.4} />
+        ) : (
+          <IconChevronRight size={24} stroke={2.4} />
+        )}
+      </ActionIcon>
+    );
+  };
+
   return (
-    <Stack gap="xl" pb="xl">
+    <Stack gap="xl" className={classes.page}>
       <EditCapModal opened={editing} close={closeEdit} cap={cap} />
 
       <Group justify="space-between">
         {backLink}
-        {index >= 0 && order.length > 1 && (
-          <Group gap="xs">
-            <ActionIcon
-              variant="default"
-              size="lg"
-              aria-label="Previous cap"
-              disabled={previousId === undefined}
-              onClick={() => goTo(previousId)}
-            >
-              <IconChevronLeft size={18} />
-            </ActionIcon>
-            <Text size="sm" c="dimmed" className={classes.position}>
-              {index + 1} of {order.length}
-            </Text>
-            <ActionIcon
-              variant="default"
-              size="lg"
-              aria-label="Next cap"
-              disabled={nextId === undefined}
-              onClick={() => goTo(nextId)}
-            >
-              <IconChevronRight size={18} />
-            </ActionIcon>
-          </Group>
-        )}
+        <span className={classes.widePosition}>{position}</span>
       </Group>
 
-      <div className={classes.layout}>
-        <Stack gap="xs" align="center">
-          <CapCircle cap={cap} alt={beer.name} full />
+      <div className={classes.stage}>
+        {hasNeighbours && stepButton("previous", classes.step)}
+        <div className={classes.capColumn}>
+          <CapCircle
+            cap={cap}
+            alt={beer.name}
+            full
+            deep
+            transitionName={capTransitionName(cap.id)}
+          />
           <Anchor
             href={getImageUrl(cap.presigned_url)}
             target="_blank"
             rel="noreferrer"
             size="sm"
+            c="dimmed"
           >
             Open the original photo
           </Anchor>
-        </Stack>
+        </div>
 
-        <Stack gap="md">
-          <div>
-            {brand && (
-              <Text fw={600} c="dimmed">
-                {brand.name}
-              </Text>
-            )}
-            <Title order={1}>{beer.name}</Title>
-            {cap.variant_name && (
-              <Text size="lg" mt={4}>
-                {cap.variant_name}
-              </Text>
-            )}
-          </div>
+        {/* The cap's details on a white tag, as in a museum case. */}
+        <section className={classes.tag} aria-labelledby="cap-name">
+          <span className={classes.eyelet} aria-hidden="true" />
+          {brand && <p className={classes.brand}>{brand.name}</p>}
+          <h1 id="cap-name" className={`${classes.name} display`}>
+            {beer.name}
+          </h1>
+          {cap.variant_name && (
+            <p className={classes.variant}>{cap.variant_name}</p>
+          )}
 
           <dl className={classes.facts}>
             <dt>Country</dt>
@@ -222,26 +231,23 @@ export function CapDetailPage() {
           </dl>
 
           {isAdmin && (
-            <Group gap="sm">
-              <Button
-                variant="default"
-                leftSection={<IconPencil size={16} />}
-                onClick={openEdit}
-              >
+            <div className={classes.tagActions}>
+              <UnstyledButton className={classes.edit} onClick={openEdit}>
+                <IconPencil size={16} stroke={2.2} />
                 Edit
-              </Button>
-              <Button
-                variant="subtle"
-                color="red"
-                leftSection={<IconTrash size={16} />}
-                loading={deleteMutation.isPending}
+              </UnstyledButton>
+              <UnstyledButton
+                className={classes.delete}
+                disabled={deleteMutation.isPending}
                 onClick={handleDelete}
               >
+                <IconTrash size={16} stroke={2.2} />
                 Delete
-              </Button>
-            </Group>
+              </UnstyledButton>
+            </div>
           )}
-        </Stack>
+        </section>
+        {hasNeighbours && stepButton("next", classes.step)}
       </div>
 
       {sameBeer.length > 0 && (
@@ -251,15 +257,28 @@ export function CapDetailPage() {
         <RelatedCaps
           title={`More from ${brand.name}`}
           caps={sameBrand.slice(0, MORE_FROM_BRAND)}
-          footer={
+          link={
             sameBrand.length > MORE_FROM_BRAND && (
-              <Anchor component={Link} to={`/?brand=${brand.id}`} size="sm">
+              <Anchor
+                component={Link}
+                to={`/?brand=${brand.id}`}
+                size="sm"
+                c="dimmed"
+              >
                 All {pluralCaps(sameBrand.length + sameBeer.length + 1)} from{" "}
                 {brand.name}
               </Anchor>
             )
           }
         />
+      )}
+
+      {hasNeighbours && (
+        <div className={classes.phoneBar}>
+          {stepButton("previous", "")}
+          {position}
+          {stepButton("next", "")}
+        </div>
       )}
     </Stack>
   );
@@ -268,24 +287,26 @@ export function CapDetailPage() {
 function RelatedCaps({
   title,
   caps,
-  footer,
+  link,
 }: {
   title: string;
   caps: BeerCap[];
-  footer?: ReactNode;
+  link?: ReactNode;
 }) {
   const capIds = caps.map((c) => c.id);
   return (
-    <section>
-      <Title order={2} fz="h3" mb="sm">
-        {title}
-      </Title>
+    <section className={classes.related}>
+      <div className={classes.relatedHead}>
+        <Title order={2} fz="h3">
+          {title}
+        </Title>
+        {link}
+      </div>
       <CapGrid compact>
         {caps.map((c) => (
           <CapTile key={c.id} cap={c} capIds={capIds} />
         ))}
       </CapGrid>
-      {footer && <div className={classes.footer}>{footer}</div>}
     </section>
   );
 }

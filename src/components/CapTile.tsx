@@ -1,9 +1,11 @@
-import { Skeleton } from "@mantine/core";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import type { CapListState } from "../features/Dashboard/capNavigation";
+import {
+  type CapListState,
+  capTransitionName,
+} from "../features/Dashboard/capNavigation";
 import type { BeerCap } from "../types";
-import { CapCircle } from "./CapCircle";
+import { CapCircle, CapSocket } from "./CapCircle";
 import classes from "./CapTile.module.css";
 
 type TileCap = Pick<
@@ -19,7 +21,7 @@ interface CapTileProps {
   caption?: ReactNode;
 }
 
-/** A cap in the collection: the cap itself, its beer's name under it. */
+/** A cap in the collection: the cap in its socket, its beer's name under it. */
 export function CapTile({ cap, capIds, caption }: CapTileProps) {
   const state: CapListState | undefined = capIds ? { capIds } : undefined;
   const name = cap.variant_name
@@ -29,11 +31,12 @@ export function CapTile({ cap, capIds, caption }: CapTileProps) {
     <Link
       to={`/cap/${cap.id}`}
       state={state}
+      viewTransition
       className={classes.tile}
       title={name}
     >
-      <CapCircle cap={cap} alt="" />
-      <span className={`${classes.name} condensed`}>{cap.beer.name}</span>
+      <CapCircle cap={cap} alt="" transitionName={capTransitionName(cap.id)} />
+      <span className={`${classes.name} display`}>{cap.beer.name}</span>
       {caption ??
         (cap.variant_name && (
           <span className={classes.caption}>{cap.variant_name}</span>
@@ -42,11 +45,11 @@ export function CapTile({ cap, capIds, caption }: CapTileProps) {
   );
 }
 
+/** An empty socket while the collection loads. */
 export function CapTileSkeleton() {
   return (
     <div className={classes.tile} aria-hidden="true">
-      <Skeleton circle className={classes.skeletonCircle} />
-      <Skeleton height={12} width="70%" mt={4} />
+      <CapSocket />
     </div>
   );
 }

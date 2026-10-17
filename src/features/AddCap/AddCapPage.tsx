@@ -390,7 +390,7 @@ export function AddCapPage() {
                 className={classes.addedCap}
               >
                 <CapCircle cap={cap} alt="" size={64} />
-                <span className="condensed">{cap.beer.name}</span>
+                <span className="display">{cap.beer.name}</span>
               </Link>
             ))}
           </div>

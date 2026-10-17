@@ -1,59 +1,106 @@
+/* No bar: the name, search and actions sit straight on the felt. */
 .header {
-  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 1rem 2rem;
+  padding-top: 1.375rem;
+  padding-bottom: 1.125rem;
 }
 
 .brand {
   display: flex;
+  flex: none;
   align-items: center;
-  gap: 0.5rem;
-  color: var(--ink);
+  gap: 0.75rem;
+  color: var(--foam);
+  font-size: 2.125rem;
+  font-weight: 800;
+  line-height: 1;
   text-decoration: none;
-  font-size: 1.375rem;
-  font-weight: 700;
-  font-stretch: 75%;
   white-space: nowrap;
 }
 
-/* Header links: the current page is underlined in amber, flush with the
-   header's bottom edge. */
-.link {
+/* Takes the free width even when empty, pushing the actions right. */
+.searchSlot {
   display: flex;
-  align-items: center;
-  height: 100%;
-  padding: 0 0.75rem;
-  border-bottom: 3px solid transparent;
-  color: var(--ink);
+  flex: 1 1 22rem;
+  min-width: 0;
+}
+
+.nav {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.link {
+  padding: 0.5rem 0.75rem;
+  color: var(--hop);
   font-weight: 500;
   text-decoration: none;
 }
 
-.link:hover {
-  border-bottom-color: var(--line);
+.link:hover,
+.link[aria-current="page"] {
+  color: var(--foam);
 }
 
 .link[aria-current="page"] {
-  border-bottom-color: var(--mantine-color-lager-5);
-  font-weight: 650;
+  text-decoration: underline;
+  text-decoration-color: var(--brass);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
 }
 
-/* Phone menu: the current page gets an amber bar on the left. */
+.burger {
+  margin-left: auto;
+}
+
+.main {
+  padding-top: 0.75rem;
+  padding-bottom: 5rem;
+}
+
+@media (max-width: 47.99em) {
+  .header {
+    padding-top: 0.875rem;
+    padding-bottom: 0.625rem;
+  }
+
+  .brand {
+    font-size: 1.75rem;
+  }
+
+  .brand svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* Phones search from the bar at the bottom of the collection. */
+  .searchSlot,
+  .nav,
+  .wide {
+    display: none;
+  }
+}
+
+/* Phone menu: the current page gets a brass bar on the left. */
+.menu {
+  display: flex;
+  flex-direction: column;
+  margin: 0 calc(-1 * var(--mantine-spacing-md));
+}
+
 .menuLink {
-  display: block;
   padding: 0.75rem 1rem;
   border-left: 3px solid transparent;
-  color: var(--ink);
+  color: var(--foam);
   font-size: var(--mantine-font-size-lg);
   font-weight: 500;
   text-decoration: none;
 }
 
 .menuLink[aria-current="page"] {
-  border-left-color: var(--mantine-color-lager-5);
-  background: var(--mantine-color-lager-0);
-  font-weight: 650;
-}
-
-/* Add button on phones, in thumb reach (placed by <Affix>). */
-.fab {
-  box-shadow: var(--cap-shadow);
+  border-left-color: var(--brass);
+  background: var(--raised);
+  font-weight: 600;
 }

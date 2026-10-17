@@ -28,3 +28,7 @@ export function capIdsFrom(state: unknown): number[] | null {
   const ids = (state as Partial<CapListState> | null)?.capIds;
   return Array.isArray(ids) ? ids : null;
 }
+
+/** The name a cap's socket shares with the large one on its page, so the
+ * cap moves from one to the other (a view transition). */
+export const capTransitionName = (id: number) => `cap-${id}`;
