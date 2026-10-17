@@ -1,6 +1,8 @@
+import { Button, Center, Stack, Text, Title } from "@mantine/core";
 import { useEffect } from "react";
 import {
   BrowserRouter,
+  Link,
   Navigate,
   Route,
   Routes,
@@ -40,6 +42,20 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function NotFoundPage() {
+  return (
+    <Center h="50vh">
+      <Stack align="center">
+        <Title order={2}>Page not found</Title>
+        <Text c="dimmed">This page doesn't exist.</Text>
+        <Button component={Link} to="/">
+          Back to the collection
+        </Button>
+      </Stack>
+    </Center>
+  );
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -72,9 +88,9 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/cap/:id" element={<CapDetailPage />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
-
-          <Route path="/cap/:id" element={<CapDetailPage />} />
         </Routes>
       </AuthCatcher>
     </BrowserRouter>

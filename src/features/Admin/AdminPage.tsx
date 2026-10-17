@@ -30,7 +30,7 @@ import {
   IconWorld,
 } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   generateAllAugmentations,
   generateEmbeddings,
@@ -50,15 +50,22 @@ import {
   updateBrand,
   updateCountry,
 } from "../../api/references";
-import type { Beer, BeerBrand, Country } from "../../types";
+import { useMatchingEnabled } from "../../hooks/useMatchingEnabled";
+import type { Beer, BeerBrandWithBeers, CountryWithBeers } from "../../types";
+import { notifySuccess } from "../../utils/notify";
 
 export function AdminPage() {
   const queryClient = useQueryClient();
+  const matchingEnabled = useMatchingEnabled();
   const [augCount, setAugCount] = useState<number>(5);
 
   const [editingBeer, setEditingBeer] = useState<Beer | null>(null);
-  const [editingBrand, setEditingBrand] = useState<BeerBrand | null>(null);
-  const [editingCountry, setEditingCountry] = useState<Country | null>(null);
+  const [editingBrand, setEditingBrand] = useState<BeerBrandWithBeers | null>(
+    null,
+  );
+  const [editingCountry, setEditingCountry] = useState<CountryWithBeers | null>(
+    null,
+  );
 
   const { data: backups = [], isLoading: isLoadingBackups } = useQuery({
     queryKey: ["backups"],
@@ -67,12 +74,18 @@ export function AdminPage() {
 
   const createBackupMut = useMutation({
     mutationFn: createBackup,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["backups"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["backups"] });
+      notifySuccess("Backup created.");
+    },
   });
 
   const deleteBackupMut = useMutation({
     mutationFn: deleteBackup,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["backups"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["backups"] });
+      notifySuccess("Backup deleted.");
+    },
   });
 
   const formatBytes = (bytes: number) => {
@@ -80,7 +93,7 @@ export function AdminPage() {
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+    return `${parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
   };
 
   const { data: beers = [] } = useQuery({
@@ -106,121 +119,67 @@ export function AdminPage() {
     validate: { name: (v) => (v.length < 1 ? "Required" : null) },
   });
 
-  const editBeerForm = useForm({
-    initialValues: {
-      name: "",
-      rating: 0,
-      beer_brand_id: null as string | null,
-      country_id: null as string | null,
-    },
+  const onPipelineStep = (result: { message: string }) =>
+    notifySuccess(result.message);
+  const mutationAug = useMutation({
+    mutationFn: generateAllAugmentations,
+    onSuccess: onPipelineStep,
   });
-
-  const editBrandForm = useForm({ initialValues: { name: "" } });
-  const editCountryForm = useForm({
-    initialValues: { name: "", description: "" },
+  const mutationEmb = useMutation({
+    mutationFn: generateEmbeddings,
+    onSuccess: onPipelineStep,
   });
-
-  useEffect(() => {
-    if (editingBeer) {
-      editBeerForm.setValues({
-        name: editingBeer.name,
-        rating: editingBeer.rating,
-        beer_brand_id:
-          (editingBeer.brand?.id || editingBeer.beer_brand?.id)?.toString() ||
-          null,
-        country_id: editingBeer.country?.id?.toString() || null,
-      });
-    }
-  }, [editingBeer, editBeerForm.setValues]);
-
-  useEffect(() => {
-    if (editingBrand) editBrandForm.setValues({ name: editingBrand.name });
-  }, [editingBrand, editBrandForm.setValues]);
-
-  useEffect(() => {
-    if (editingCountry)
-      editCountryForm.setValues({
-        name: editingCountry.name,
-        description: editingCountry.description || "",
-      });
-  }, [editingCountry, editCountryForm.setValues]);
-
-  const mutationAug = useMutation({ mutationFn: generateAllAugmentations });
-  const mutationEmb = useMutation({ mutationFn: generateEmbeddings });
-  const mutationIdx = useMutation({ mutationFn: generateIndex });
+  const mutationIdx = useMutation({
+    mutationFn: generateIndex,
+    onSuccess: onPipelineStep,
+  });
 
   const createBrandMut = useMutation({
     mutationFn: createBrand,
-    onSuccess: () => {
+    onSuccess: (brand) => {
       queryClient.invalidateQueries({ queryKey: ["brands"] });
       brandForm.reset();
+      notifySuccess(`Brand "${brand.name}" added.`);
     },
   });
 
   const createCountryMut = useMutation({
     mutationFn: (vals: { name: string; description: string }) =>
-      createCountry(vals.name, vals.description),
-    onSuccess: () => {
+      createCountry({
+        name: vals.name,
+        description: vals.description.trim() || null,
+      }),
+    onSuccess: (country) => {
       queryClient.invalidateQueries({ queryKey: ["countries"] });
       countryForm.reset();
-    },
-  });
-
-  const updateBeerMut = useMutation({
-    mutationFn: (vals: {
-      id: number;
-      capId: number;
-      name: string;
-      rating: number;
-      beer_brand_id: number | null;
-      country_id: number | null;
-    }) =>
-      updateBeer(vals.id, vals.capId, {
-        name: vals.name,
-        rating: vals.rating,
-        beer_brand_id: vals.beer_brand_id,
-        country_id: vals.country_id,
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["beers"] });
-      setEditingBeer(null);
-    },
-  });
-
-  const updateBrandMut = useMutation({
-    mutationFn: (vals: { id: number; name: string }) =>
-      updateBrand(vals.id, { name: vals.name }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["brands"] });
-      setEditingBrand(null);
-    },
-  });
-
-  const updateCountryMut = useMutation({
-    mutationFn: (vals: { id: number; name: string; description: string }) =>
-      updateCountry(vals.id, {
-        name: vals.name,
-        description: vals.description,
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["countries"] });
-      setEditingCountry(null);
+      notifySuccess(`Country "${country.name}" added.`);
     },
   });
 
   const deleteBeerMut = useMutation({
     mutationFn: deleteBeer,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["beers"] }),
+    onSuccess: () => {
+      // Deleting a beer also deletes its caps.
+      queryClient.invalidateQueries({ queryKey: ["beers"] });
+      queryClient.invalidateQueries({ queryKey: ["beerCaps"] });
+      notifySuccess("Beer deleted.");
+    },
   });
 
   const deleteBrandMut = useMutation({
     mutationFn: deleteBrand,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["brands"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["brands"] });
+      notifySuccess("Brand deleted.");
+    },
   });
 
   const deleteCountryMut = useMutation({
     mutationFn: deleteCountry,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["countries"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["countries"] });
+      notifySuccess("Country deleted.");
+    },
   });
 
   const handleConfirmDelete = (
@@ -237,11 +196,8 @@ export function AdminPage() {
         ⚙️ Administration Dashboard
       </Title>
 
-      <Tabs defaultValue="maintenance">
+      <Tabs defaultValue="beers">
         <Tabs.List mb="lg">
-          <Tabs.Tab value="maintenance" leftSection={<IconRobot size={16} />}>
-            AI Pipeline
-          </Tabs.Tab>
           <Tabs.Tab value="beers" leftSection={<IconDatabase size={16} />}>
             Beers
           </Tabs.Tab>
@@ -254,6 +210,11 @@ export function AdminPage() {
           <Tabs.Tab value="backups" leftSection={<IconArchive size={16} />}>
             Backups
           </Tabs.Tab>
+          {matchingEnabled && (
+            <Tabs.Tab value="maintenance" leftSection={<IconRobot size={16} />}>
+              AI Pipeline
+            </Tabs.Tab>
+          )}
         </Tabs.List>
 
         <Tabs.Panel value="maintenance">
@@ -313,11 +274,9 @@ export function AdminPage() {
               {beers.map((beer) => (
                 <Table.Tr key={beer.id}>
                   <Table.Td>{beer.name}</Table.Td>
+                  <Table.Td>{beer.beer_brand?.name ?? "N/A"}</Table.Td>
                   <Table.Td>
-                    {beer.brand?.name || beer.beer_brand?.name || "N/A"}
-                  </Table.Td>
-                  <Table.Td>
-                    <Badge color="yellow">{beer.rating}/10</Badge>
+                    <Badge color="yellow">{beer.rating ?? 0}/10</Badge>
                   </Table.Td>
                   <Table.Td>
                     <Group gap="xs">
@@ -537,121 +496,207 @@ export function AdminPage() {
         </Tabs.Panel>
       </Tabs>
 
-      {/* EDIT BEER MODAL */}
       <Modal
         opened={!!editingBeer}
         onClose={() => setEditingBeer(null)}
         title="Edit Beer"
       >
-        <form
-          onSubmit={editBeerForm.onSubmit((v) => {
-            const capId = editingBeer?.caps?.[0]?.id || 0;
-            if (editingBeer) {
-              updateBeerMut.mutate({
-                id: editingBeer.id,
-                capId,
-                name: v.name,
-                rating: v.rating,
-                beer_brand_id: v.beer_brand_id
-                  ? parseInt(v.beer_brand_id, 10)
-                  : null,
-                country_id: v.country_id ? parseInt(v.country_id, 10) : null,
-              });
-            }
-          })}
-        >
-          <Stack>
-            <TextInput label="Name" {...editBeerForm.getInputProps("name")} />
-            <NumberInput
-              label="Rating"
-              min={0}
-              max={10}
-              {...editBeerForm.getInputProps("rating")}
-            />
-            <Select
-              label="Beer Brand"
-              placeholder="Select Brand"
-              data={brands.map((b) => ({
-                value: b.id.toString(),
-                label: b.name,
-              }))}
-              searchable
-              clearable
-              {...editBeerForm.getInputProps("beer_brand_id")}
-            />
-            <Select
-              label="Country"
-              placeholder="Select Country"
-              data={countries.map((c) => ({
-                value: c.id.toString(),
-                label: c.name,
-              }))}
-              searchable
-              clearable
-              {...editBeerForm.getInputProps("country_id")}
-            />
-            <Button type="submit" loading={updateBeerMut.isPending}>
-              Save
-            </Button>
-          </Stack>
-        </form>
+        {editingBeer && (
+          <EditBeerForm
+            beer={editingBeer}
+            brands={brands}
+            countries={countries}
+            onDone={() => setEditingBeer(null)}
+          />
+        )}
       </Modal>
 
-      {/* EDIT BRAND MODAL */}
       <Modal
         opened={!!editingBrand}
         onClose={() => setEditingBrand(null)}
         title="Edit Brand"
       >
-        <form
-          onSubmit={editBrandForm.onSubmit((v) => {
-            if (editingBrand)
-              updateBrandMut.mutate({ id: editingBrand.id, name: v.name });
-          })}
-        >
-          <Stack>
-            <TextInput
-              label="Brand Name"
-              {...editBrandForm.getInputProps("name")}
-            />
-            <Button type="submit" loading={updateBrandMut.isPending}>
-              Save
-            </Button>
-          </Stack>
-        </form>
+        {editingBrand && (
+          <EditBrandForm
+            brand={editingBrand}
+            onDone={() => setEditingBrand(null)}
+          />
+        )}
       </Modal>
 
-      {/* EDIT COUNTRY MODAL */}
       <Modal
         opened={!!editingCountry}
         onClose={() => setEditingCountry(null)}
         title="Edit Country"
       >
-        <form
-          onSubmit={editCountryForm.onSubmit((v) => {
-            if (editingCountry)
-              updateCountryMut.mutate({
-                id: editingCountry.id,
-                name: v.name,
-                description: v.description,
-              });
-          })}
-        >
-          <Stack>
-            <TextInput
-              label="Country Name"
-              {...editCountryForm.getInputProps("name")}
-            />
-            <Textarea
-              label="Description"
-              {...editCountryForm.getInputProps("description")}
-            />
-            <Button type="submit" loading={updateCountryMut.isPending}>
-              Save
-            </Button>
-          </Stack>
-        </form>
+        {editingCountry && (
+          <EditCountryForm
+            country={editingCountry}
+            onDone={() => setEditingCountry(null)}
+          />
+        )}
       </Modal>
     </Container>
+  );
+}
+
+// The edit forms mount when their modal opens, so they start from the
+// current values without syncing state in an effect.
+
+function EditBeerForm({
+  beer,
+  brands,
+  countries,
+  onDone,
+}: {
+  beer: Beer;
+  brands: BeerBrandWithBeers[];
+  countries: CountryWithBeers[];
+  onDone: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const form = useForm({
+    initialValues: {
+      name: beer.name,
+      rating: beer.rating ?? 0,
+      beer_brand_id: beer.beer_brand?.id.toString() ?? null,
+      country_id: beer.country?.id.toString() ?? null,
+    },
+    validate: {
+      name: (v) => (v.trim() ? null : "Required"),
+      beer_brand_id: (v) => (v ? null : "Select a brand"),
+    },
+  });
+
+  const mutation = useMutation({
+    mutationFn: (v: typeof form.values) =>
+      updateBeer(beer.id, {
+        name: v.name.trim(),
+        rating: v.rating,
+        beer_brand_id: Number(v.beer_brand_id),
+        // null removes the country.
+        country_id: v.country_id ? Number(v.country_id) : null,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["beers"] });
+      queryClient.invalidateQueries({ queryKey: ["beerCaps"] });
+      notifySuccess("Beer updated.");
+      onDone();
+    },
+  });
+
+  return (
+    <form onSubmit={form.onSubmit((v) => mutation.mutate(v))}>
+      <Stack>
+        <TextInput label="Name" {...form.getInputProps("name")} />
+        <NumberInput
+          label="Rating"
+          min={0}
+          max={10}
+          {...form.getInputProps("rating")}
+        />
+        <Select
+          label="Beer Brand"
+          placeholder="Select Brand"
+          data={brands.map((b) => ({ value: b.id.toString(), label: b.name }))}
+          searchable
+          {...form.getInputProps("beer_brand_id")}
+        />
+        <Select
+          label="Country"
+          placeholder="No country"
+          data={countries.map((c) => ({
+            value: c.id.toString(),
+            label: c.name,
+          }))}
+          searchable
+          clearable
+          {...form.getInputProps("country_id")}
+        />
+        <Button type="submit" loading={mutation.isPending}>
+          Save
+        </Button>
+      </Stack>
+    </form>
+  );
+}
+
+function EditBrandForm({
+  brand,
+  onDone,
+}: {
+  brand: BeerBrandWithBeers;
+  onDone: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const form = useForm({
+    initialValues: { name: brand.name },
+    validate: { name: (v) => (v.trim() ? null : "Required") },
+  });
+
+  const mutation = useMutation({
+    mutationFn: (v: typeof form.values) =>
+      updateBrand(brand.id, { name: v.name.trim() }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["brands"] });
+      queryClient.invalidateQueries({ queryKey: ["beers"] });
+      queryClient.invalidateQueries({ queryKey: ["beerCaps"] });
+      notifySuccess("Brand updated.");
+      onDone();
+    },
+  });
+
+  return (
+    <form onSubmit={form.onSubmit((v) => mutation.mutate(v))}>
+      <Stack>
+        <TextInput label="Brand Name" {...form.getInputProps("name")} />
+        <Button type="submit" loading={mutation.isPending}>
+          Save
+        </Button>
+      </Stack>
+    </form>
+  );
+}
+
+function EditCountryForm({
+  country,
+  onDone,
+}: {
+  country: CountryWithBeers;
+  onDone: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const form = useForm({
+    initialValues: {
+      name: country.name,
+      description: country.description ?? "",
+    },
+    validate: { name: (v) => (v.trim() ? null : "Required") },
+  });
+
+  const mutation = useMutation({
+    mutationFn: (v: typeof form.values) =>
+      updateCountry(country.id, {
+        name: v.name.trim(),
+        description: v.description.trim() || null,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["countries"] });
+      queryClient.invalidateQueries({ queryKey: ["beerCaps"] });
+      notifySuccess("Country updated.");
+      onDone();
+    },
+  });
+
+  return (
+    <form onSubmit={form.onSubmit((v) => mutation.mutate(v))}>
+      <Stack>
+        <TextInput label="Country Name" {...form.getInputProps("name")} />
+        <Textarea label="Description" {...form.getInputProps("description")} />
+        <Button type="submit" loading={mutation.isPending}>
+          Save
+        </Button>
+      </Stack>
+    </form>
   );
 }

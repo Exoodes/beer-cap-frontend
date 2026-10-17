@@ -27,6 +27,7 @@ export function BeerCapCard({ cap, onDelete }: BeerCapCardProps) {
           src={getImageUrl(cap.presigned_url)}
           height={160}
           alt={cap.beer.name}
+          loading="lazy"
           fallbackSrc="https://placehold.co/600x400?text=No+Image"
         />
       </Card.Section>
@@ -34,10 +35,9 @@ export function BeerCapCard({ cap, onDelete }: BeerCapCardProps) {
       <Stack mt="md" mb="xs" gap="xs">
         <Group justify="space-between" wrap="nowrap">
           <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
-            {/* Display Brand Name above or next to Beer Name */}
-            {(cap.beer.beer_brand || cap.beer.brand) && (
+            {cap.beer.beer_brand && (
               <Text size="xs" c="dimmed" fw={700} tt="uppercase" truncate>
-                {cap.beer.beer_brand?.name || cap.beer.brand?.name}
+                {cap.beer.beer_brand.name}
               </Text>
             )}
             <Text fw={500} truncate>
@@ -45,7 +45,7 @@ export function BeerCapCard({ cap, onDelete }: BeerCapCardProps) {
             </Text>
           </Stack>
 
-          {cap.beer.rating && (
+          {!!cap.beer.rating && (
             <Badge
               color="yellow"
               variant="light"
@@ -69,7 +69,7 @@ export function BeerCapCard({ cap, onDelete }: BeerCapCardProps) {
         )}
       </Stack>
 
-      {isAdmin && (
+      {isAdmin && onDelete && (
         <Button
           color="red"
           variant="light"
@@ -80,7 +80,7 @@ export function BeerCapCard({ cap, onDelete }: BeerCapCardProps) {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            onDelete?.(cap.id);
+            onDelete(cap.id);
           }}
         >
           Delete

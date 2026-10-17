@@ -1,13 +1,10 @@
-import axios from "axios";
+import axios, { isAxiosError } from "axios";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
-export const client = axios.create({
-  baseURL: apiBaseUrl,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+// No default Content-Type: axios picks JSON for objects and multipart (with
+// the boundary) for FormData. Forcing JSON turned FormData into JSON bodies.
+export const client = axios.create({ baseURL: apiBaseUrl });
 
 client.interceptors.request.use((config) => {
   const token = localStorage.getItem("admin_token");
@@ -17,10 +14,32 @@ client.interceptors.request.use((config) => {
   return config;
 });
 
-client.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error("API Error:", error.response?.data || error.message);
-    return Promise.reject(error);
-  },
-);
+interface ValidationIssue {
+  loc?: (string | number)[];
+  msg: string;
+}
+
+/** Turns an API error into a message fit for showing to the user. */
+export function getErrorMessage(error: unknown): string {
+  if (!isAxiosError(error)) {
+    return error instanceof Error ? error.message : String(error);
+  }
+  if (!error.response) {
+    return "Cannot reach the server. Check your connection and try again.";
+  }
+  if (error.response.status === 401) {
+    return "Not authorized. Log in as admin again.";
+  }
+  const detail = (error.response.data as { detail?: unknown } | undefined)
+    ?.detail;
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    return (detail as ValidationIssue[])
+      .map((issue) => {
+        const field = issue.loc?.filter((part) => part !== "body").at(-1);
+        return field ? `${field}: ${issue.msg}` : issue.msg;
+      })
+      .join("; ");
+  }
+  return `Request failed (${error.response.status}).`;
+}

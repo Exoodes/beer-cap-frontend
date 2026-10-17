@@ -10,12 +10,14 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { IconBeer, IconPlus, IconShieldCheck } from "@tabler/icons-react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
+import { useMatchingEnabled } from "../hooks/useMatchingEnabled";
 
 export function Layout() {
   const [opened, { toggle }] = useDisclosure();
   const navigate = useNavigate();
 
   const isAdmin = !!localStorage.getItem("admin_token");
+  const matchingEnabled = useMatchingEnabled();
 
   const handleLogout = () => {
     localStorage.removeItem("admin_token");
@@ -68,9 +70,11 @@ export function Layout() {
               </Button>
               {isAdmin && (
                 <>
-                  <Button component={Link} to="/match" variant="subtle">
-                    Matcher
-                  </Button>
+                  {matchingEnabled && (
+                    <Button component={Link} to="/match" variant="subtle">
+                      Matcher
+                    </Button>
+                  )}
                   <Button
                     component={Link}
                     to="/admin"
@@ -114,14 +118,16 @@ export function Layout() {
             >
               Add Cap
             </Button>
-            <Button
-              component={Link}
-              to="/match"
-              variant="subtle"
-              onClick={toggle}
-            >
-              Find Match
-            </Button>
+            {matchingEnabled && (
+              <Button
+                component={Link}
+                to="/match"
+                variant="subtle"
+                onClick={toggle}
+              >
+                Find Match
+              </Button>
+            )}
           </>
         )}
       </AppShell.Navbar>

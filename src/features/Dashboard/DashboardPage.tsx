@@ -11,6 +11,7 @@ import { IconAlertCircle, IconBeer } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteCap, getAllCaps } from "../../api/beerCaps";
 import { BeerCapCard } from "../../components/BeerCapCard";
+import { notifySuccess } from "../../utils/notify";
 
 export function DashboardPage() {
   const queryClient = useQueryClient();
@@ -29,11 +30,8 @@ export function DashboardPage() {
   const deleteMutation = useMutation({
     mutationFn: deleteCap,
     onSuccess: () => {
-      // Invalidate cache to trigger a re-fetch automatically
       queryClient.invalidateQueries({ queryKey: ["beerCaps"] });
-    },
-    onError: () => {
-      alert("Failed to delete cap");
+      notifySuccess("Cap deleted.");
     },
   });
 
