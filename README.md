@@ -1,106 +1,37 @@
-# React + TypeScript + Vite
+# Beer Caps (frontend)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The web app for a beer-cap collection: browse and search every cap, and (in admin mode) add caps from a phone camera and look after beers, brands, countries and backups. It talks to the [beer-cap-matcher](https://github.com/Exoodes/beer-cap-matcher) API.
 
-Currently, two official plugins are available:
+React 19, Vite, TypeScript, [Mantine 8](https://mantine.dev), TanStack Query.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Running it locally
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
----
-
-## Local Development Setup
-
-This project uses [Vite](https://vitejs.dev/), React, and TypeScript. We enforce code quality using ESLint and Biome.
-
-### 1. Install Dependencies
-Make sure you have Node.js installed, then run:
 ```bash
 npm install
+npm run dev          # http://localhost:5173
 ```
 
-### 2. VS Code Configuration
+The API is expected at `http://localhost:8000`. Point elsewhere with `VITE_API_BASE_URL` (e.g. in `.env.local`). The API only accepts requests from its configured frontend URL, so keep the dev server on port 5173.
 
-To ensure your code is automatically formatted and linted on save, install the **Biome** and **ESLint** extensions. Then, ensure your `.vscode/settings.json` includes:
+**Admin mode:** open any page with `?admin_secret=<the API's admin token>`. The secret is kept on that device until you choose *Lock admin mode*.
 
-```json
-{
-  "[typescriptreact]": {
-    "editor.defaultFormatter": "biomejs.biome",
-    "editor.formatOnSave": true
-  },
-  "[typescript]": {
-    "editor.defaultFormatter": "biomejs.biome",
-    "editor.formatOnSave": true
-  },
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit",
-    "source.organizeImports.biome": "explicit"
-  }
-}
-```
+## Scripts
+
+| Command | Does |
+|---|---|
+| `npm run dev` | Dev server with hot reload |
+| `npm run build` | Type-check and build to `dist/` |
+| `npm test` | Unit tests (Vitest) |
+| `npm run lint` | ESLint |
+| `npx @biomejs/biome check --write src` | Format and sort imports |
+| `npm run gen:api` | Regenerate `src/types/api.d.ts` from the running API's OpenAPI schema |
+
+CI runs lint, Biome, tests and the build on every pull request. Merging to `master` deploys.
+
+## Where things are
+
+- `src/theme.ts`, `src/styles/global.css`: colours, type and design tokens
+- `src/features/`: pages (collection, cap detail, add cap, admin)
+- `src/components/`: shared UI (layout, image dropzone, cap card)
+- `src/api/`: API calls; `src/types/`: types generated from the API
+- `src/utils/search.ts`: diacritic-insensitive search used by every search box

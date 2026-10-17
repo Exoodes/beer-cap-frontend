@@ -25,7 +25,10 @@ import {
 } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
+import { useAdmin } from "../../admin/adminContext";
 import { deleteCap, getCapById } from "../../api/beerCaps";
+import { confirmDelete } from "../../utils/confirm";
+import { formatDate } from "../../utils/format";
 import { getImageUrl } from "../../utils/imageUtils";
 import { notifySuccess } from "../../utils/notify";
 import { EditCapModal } from "./EditCapModal";
@@ -39,7 +42,7 @@ export function CapDetailPage() {
   // Modal state for editing
   const [opened, { open, close }] = useDisclosure(false);
 
-  const isAdmin = !!localStorage.getItem("admin_token");
+  const { isAdmin } = useAdmin();
 
   // 1. Fetch Single Cap Data
   const {
@@ -65,13 +68,11 @@ export function CapDetailPage() {
   });
 
   const handleDelete = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this cap? This cannot be undone.",
-      )
-    ) {
-      deleteMutation.mutate(id);
-    }
+    confirmDelete({
+      title: "Delete this cap?",
+      message: "Its photo is deleted too. This can't be undone.",
+      onConfirm: () => deleteMutation.mutate(id),
+    });
   };
 
   if (isLoading)
@@ -137,7 +138,7 @@ export function CapDetailPage() {
                     color="blue"
                     leftSection={<IconCalendar size={14} />}
                   >
-                    {cap.collected_date}
+                    {formatDate(cap.collected_date)}
                   </Badge>
                 )}
               </Group>
@@ -163,7 +164,7 @@ export function CapDetailPage() {
                     <IconBeer size={20} />
                   </ThemeIcon>
                   <div>
-                    <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
+                    <Text size="sm" c="dimmed">
                       Brand
                     </Text>
                     <Text fw={500}>
@@ -177,7 +178,7 @@ export function CapDetailPage() {
                     <IconStar size={20} />
                   </ThemeIcon>
                   <div>
-                    <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
+                    <Text size="sm" c="dimmed">
                       Rating
                     </Text>
                     <Text fw={500}>

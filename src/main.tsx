@@ -1,4 +1,11 @@
+// Mantine's styles first, so the app's own CSS wins where both apply.
+import "@mantine/core/styles.css";
+import "@mantine/dropzone/styles.css";
+import "@mantine/dates/styles.css";
+import "@mantine/notifications/styles.css";
+import "./styles/global.css";
 import { MantineProvider } from "@mantine/core";
+import { ModalsProvider } from "@mantine/modals";
 import { Notifications } from "@mantine/notifications";
 import {
   MutationCache,
@@ -8,11 +15,9 @@ import {
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.tsx";
+import { AdminProvider } from "./admin/AdminProvider";
+import { cssVariablesResolver, theme } from "./theme";
 import { notifyError } from "./utils/notify";
-import "@mantine/core/styles.css";
-import "@mantine/dropzone/styles.css";
-import "@mantine/dates/styles.css";
-import "@mantine/notifications/styles.css";
 
 // Every failed mutation shows the API's error message, so individual
 // mutations don't need their own onError.
@@ -27,10 +32,18 @@ if (!root) throw new Error("Root element not found");
 
 ReactDOM.createRoot(root).render(
   <React.StrictMode>
-    <MantineProvider>
+    <MantineProvider
+      theme={theme}
+      cssVariablesResolver={cssVariablesResolver}
+      defaultColorScheme="light"
+    >
       <Notifications position="top-right" />
       <QueryClientProvider client={queryClient}>
-        <App />
+        <AdminProvider>
+          <ModalsProvider>
+            <App />
+          </ModalsProvider>
+        </AdminProvider>
       </QueryClientProvider>
     </MantineProvider>
   </React.StrictMode>,

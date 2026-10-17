@@ -9,6 +9,7 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
+import { useAdmin } from "./admin/adminContext";
 import { Layout } from "./components/Layout";
 import { AdminPage } from "./features/Admin/AdminPage";
 import { AddCapPage } from "./features/Dashboard/AddCapPage";
@@ -19,23 +20,24 @@ import { MatcherPage } from "./features/Dashboard/MatcherPage";
 function AuthCatcher({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { unlock } = useAdmin();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const secret = params.get("admin_secret");
 
     if (secret) {
-      localStorage.setItem("admin_token", secret);
+      unlock(secret);
       // Remove the secret from the URL bar immediately
       navigate(location.pathname, { replace: true });
     }
-  }, [location, navigate]);
+  }, [location, navigate, unlock]);
 
   return <>{children}</>;
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const isAdmin = !!localStorage.getItem("admin_token");
+  const { isAdmin } = useAdmin();
   if (!isAdmin) {
     return <Navigate to="/" replace />;
   }

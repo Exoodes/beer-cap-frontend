@@ -21,8 +21,10 @@ export interface paths {
          * Create Cap Endpoint
          * @description Creates a new beer cap. Can optionally create a new beer, beer brand, and/or country.
          *     - If `beer_id` is provided, a new cap is added to that existing beer.
-         *     - If `beer_name` is provided, a new beer is created. The beer brand and country
-         *       will be linked by ID or created by name based on the provided values.
+         *     - If `beer_name` is provided, the cap goes to the brand's beer of that name
+         *       (ignoring case), which is created if the brand doesn't have it yet. The
+         *       brand and country are linked by ID, or by name (ignoring case) and
+         *       created when missing.
          */
         post: operations["create_cap_endpoint_beer_caps__post"];
         delete?: never;
@@ -79,6 +81,27 @@ export interface paths {
         patch: operations["update_beer_cap_endpoint_beer_caps__beer_cap_id___patch"];
         trace?: never;
     };
+    "/beer_caps/{beer_cap_id}/image/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Replace Beer Cap Image
+         * @description Replace a beer cap's photo. Its augmented images are deleted, as they
+         *     were made from the old photo.
+         */
+        put: operations["replace_beer_cap_image_beer_caps__beer_cap_id__image__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/beers/": {
         parameters: {
             query?: never;
@@ -116,6 +139,27 @@ export interface paths {
         patch: operations["update_beer_endpoint_beers__beer_id___patch"];
         trace?: never;
     };
+    "/beers/{beer_id}/merge/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Merge Beer Endpoint
+         * @description Merge a duplicate beer into another: its caps move to `into_id` and the
+         *     beer is deleted. A country or rating the target lacks is taken over.
+         */
+        post: operations["merge_beer_endpoint_beers__beer_id__merge__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/countries/": {
         parameters: {
             query?: never;
@@ -151,6 +195,27 @@ export interface paths {
         head?: never;
         /** Update Country Endpoint */
         patch: operations["update_country_endpoint_countries__country_id___patch"];
+        trace?: never;
+    };
+    "/countries/{country_id}/merge/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Merge Country Endpoint
+         * @description Merge a duplicate country into another: its beers move to `into_id` and
+         *     the country is deleted.
+         */
+        post: operations["merge_country_endpoint_countries__country_id__merge__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/augmented_caps/generate_all/": {
@@ -330,6 +395,28 @@ export interface paths {
         patch: operations["update_beer_brand_endpoint_beer_brands__beer_brand_id___patch"];
         trace?: never;
     };
+    "/beer_brands/{beer_brand_id}/merge/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Merge Beer Brand Endpoint
+         * @description Merge a duplicate brand into another: its beers move to `into_id` and the
+         *     brand is deleted. A beer the target brand already has (same name, ignoring
+         *     case) is merged into that beer.
+         */
+        post: operations["merge_beer_brand_endpoint_beer_brands__beer_brand_id__merge__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/backups/": {
         parameters: {
             query?: never;
@@ -446,6 +533,11 @@ export interface components {
              * @description List of beers produced by this beer brand
              */
             beers?: components["schemas"]["BeerResponseBase"][] | null;
+            /**
+             * Beer Count
+             * @description Number of beers of this brand (in the brand list)
+             */
+            beer_count?: number | null;
         };
         /** BeerBrandUpdateSchema */
         BeerBrandUpdateSchema: {
@@ -642,6 +734,11 @@ export interface components {
              * @description List of caps associated with this beer
              */
             caps?: components["schemas"]["BeerCapResponseBase"][] | null;
+            /**
+             * Cap Count
+             * @description Number of caps of this beer (in the beer list)
+             */
+            cap_count?: number | null;
         };
         /**
          * BeerUpdateSchema
@@ -701,6 +798,14 @@ export interface components {
         };
         /** Body_query_image_similarity_query_image_post */
         Body_query_image_similarity_query_image_post: {
+            /**
+             * File
+             * Format: binary
+             */
+            file: string;
+        };
+        /** Body_replace_beer_cap_image_beer_caps__beer_cap_id__image__put */
+        Body_replace_beer_cap_image_beer_caps__beer_cap_id__image__put: {
             /**
              * File
              * Format: binary
@@ -769,6 +874,11 @@ export interface components {
              * @description List of beers produced in this country
              */
             beers?: components["schemas"]["BeerResponseBase"][] | null;
+            /**
+             * Beer Count
+             * @description Number of beers from this country (in the country list)
+             */
+            beer_count?: number | null;
         };
         /**
          * CountryUpdateSchema
@@ -784,6 +894,17 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * MergeSchema
+         * @description Body of a merge: the entry that the merged one is folded into.
+         */
+        MergeSchema: {
+            /**
+             * Into Id
+             * @description ID of the entry to merge into
+             */
+            into_id: number;
         };
         /**
          * QueryResultResponse
@@ -896,6 +1017,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["BeerCapResponseWithUrl"];
                 };
+            };
+            /** @description Not an image upload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Beer not found */
             404: {
@@ -1118,6 +1246,78 @@ export interface operations {
             };
         };
     };
+    replace_beer_cap_image_beer_caps__beer_cap_id__image__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
+            path: {
+                beer_cap_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_replace_beer_cap_image_beer_caps__beer_cap_id__image__put"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BeerCapResponseWithUrl"];
+                };
+            };
+            /** @description Not an image upload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Image too large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unsupported or corrupt image */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     get_all_beers_endpoint_beers__get: {
         parameters: {
             query?: {
@@ -1310,6 +1510,55 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["BeerUpdateSchema"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BeerResponseWithCaps"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    merge_beer_endpoint_beers__beer_id__merge__post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
+            path: {
+                beer_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MergeSchema"];
             };
         };
         responses: {
@@ -1560,6 +1809,55 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    merge_country_endpoint_countries__country_id__merge__post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
+            path: {
+                country_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MergeSchema"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountryResponseWithBeers"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Internal server error */
             500: {
@@ -2053,6 +2351,55 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["BeerBrandUpdateSchema"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BeerBrandResponseWithBeers"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    merge_beer_brand_endpoint_beer_brands__beer_brand_id__merge__post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-admin-token"?: string | null;
+            };
+            path: {
+                beer_brand_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MergeSchema"];
             };
         };
         responses: {

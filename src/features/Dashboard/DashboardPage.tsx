@@ -15,6 +15,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { deleteCap, getAllCaps } from "../../api/beerCaps";
 import { BeerCapCard } from "../../components/BeerCapCard";
+import { confirmDelete } from "../../utils/confirm";
+import { pluralCaps } from "../../utils/format";
 import { notifySuccess } from "../../utils/notify";
 import { CapFilterBar } from "./CapFilterBar";
 import {
@@ -67,9 +69,12 @@ export function DashboardPage() {
   });
 
   const handleDelete = (id: number) => {
-    if (window.confirm("Are you sure you want to delete this cap?")) {
-      deleteMutation.mutate(id);
-    }
+    const cap = allCaps.find((c) => c.id === id);
+    confirmDelete({
+      title: cap ? `Delete this ${cap.beer.name} cap?` : "Delete this cap?",
+      message: "Its photo is deleted too. This can't be undone.",
+      onConfirm: () => deleteMutation.mutate(id),
+    });
   };
 
   // 3. Render States
@@ -97,8 +102,8 @@ export function DashboardPage() {
         <Title order={2}>My Collection</Title>
         <Text c="dimmed" aria-live="polite">
           {filtering
-            ? `Showing ${visibleCaps.length} of ${allCaps.length} caps`
-            : `${allCaps.length} caps`}
+            ? `Showing ${visibleCaps.length} of ${pluralCaps(allCaps.length)}`
+            : pluralCaps(allCaps.length)}
         </Text>
       </Group>
 

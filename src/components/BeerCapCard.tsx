@@ -1,6 +1,7 @@
 import { Badge, Button, Card, Group, Image, Stack, Text } from "@mantine/core";
 import { IconStar, IconTrash } from "@tabler/icons-react";
 import { Link } from "react-router-dom";
+import { useAdmin } from "../admin/adminContext";
 import type { BeerCap } from "../types";
 import { getImageUrl } from "../utils/imageUtils";
 
@@ -12,7 +13,7 @@ interface BeerCapCardProps {
 }
 
 export function BeerCapCard({ cap, onDelete }: BeerCapCardProps) {
-  const isAdmin = !!localStorage.getItem("admin_token");
+  const { isAdmin } = useAdmin();
 
   return (
     <Card
@@ -43,7 +44,7 @@ export function BeerCapCard({ cap, onDelete }: BeerCapCardProps) {
         <Group justify="space-between" wrap="nowrap">
           <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
             {cap.beer.beer_brand && (
-              <Text size="xs" c="dimmed" fw={700} tt="uppercase" truncate>
+              <Text size="sm" c="dimmed" fw={600} truncate>
                 {cap.beer.beer_brand.name}
               </Text>
             )}

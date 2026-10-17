@@ -1,0 +1,59 @@
+.header {
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 1.375rem;
+  font-weight: 700;
+  font-stretch: 75%;
+  white-space: nowrap;
+}
+
+/* Header links: the current page is underlined in amber, flush with the
+   header's bottom edge. */
+.link {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 0.75rem;
+  border-bottom: 3px solid transparent;
+  color: var(--ink);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.link:hover {
+  border-bottom-color: var(--line);
+}
+
+.link[aria-current="page"] {
+  border-bottom-color: var(--mantine-color-lager-5);
+  font-weight: 650;
+}
+
+/* Phone menu: the current page gets an amber bar on the left. */
+.menuLink {
+  display: block;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid transparent;
+  color: var(--ink);
+  font-size: var(--mantine-font-size-lg);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.menuLink[aria-current="page"] {
+  border-left-color: var(--mantine-color-lager-5);
+  background: var(--mantine-color-lager-0);
+  font-weight: 650;
+}
+
+/* Add button on phones, in thumb reach (placed by <Affix>). */
+.fab {
+  box-shadow: var(--cap-shadow);
+}
