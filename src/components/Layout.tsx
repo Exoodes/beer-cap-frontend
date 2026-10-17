@@ -64,7 +64,7 @@ export function Layout() {
               )}
             </Group>
 
-            <Group>
+            <Group visibleFrom="sm">
               <Button component={Link} to="/" variant="subtle">
                 Dashboard
               </Button>
@@ -124,10 +124,19 @@ export function Layout() {
                 to="/match"
                 variant="subtle"
                 onClick={toggle}
+                mb="xs"
               >
                 Find Match
               </Button>
             )}
+            <Button
+              component={Link}
+              to="/admin"
+              variant="subtle"
+              onClick={toggle}
+            >
+              Admin
+            </Button>
           </>
         )}
       </AppShell.Navbar>
