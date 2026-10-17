@@ -25,6 +25,8 @@ interface CreatablePickerProps<T extends PickerItem> {
   createLabel: (name: string) => ReactNode;
   /** Offer Create even when an entry has exactly this name. */
   createWhenExact?: boolean;
+  /** Off: only existing entries can be picked. */
+  allowCreate?: boolean;
 }
 
 const CREATE = "$create";
@@ -44,6 +46,7 @@ export function CreatablePicker<T extends PickerItem>({
   renderOption,
   createLabel,
   createWhenExact = false,
+  allowCreate = true,
 }: CreatablePickerProps<T>) {
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),
@@ -55,16 +58,12 @@ export function CreatablePicker<T extends PickerItem>({
     return items.find((item) => item.id === choice.id)?.name ?? "";
   };
 
-  // The input shows the chosen entry until the user types; it follows
-  // `value` when the parent changes it (e.g. a reset or a suggestion).
-  const [search, setSearch] = useState(() => textOf(value));
+  // While typing the input shows what was typed; otherwise it shows the
+  // chosen entry, derived each render so it follows resets, suggestions and
+  // items that load later.
+  const [search, setSearch] = useState("");
   const [typing, setTyping] = useState(false);
-  const [shownValue, setShownValue] = useState(value);
-  if (shownValue !== value) {
-    setShownValue(value);
-    setSearch(textOf(value));
-    setTyping(false);
-  }
+  const shown = typing ? search : textOf(value);
 
   const query = typing ? search : "";
   const matches = items
@@ -72,7 +71,8 @@ export function CreatablePicker<T extends PickerItem>({
     .slice(0, MAX_OPTIONS);
   const typed = cleanName(search);
   const exact = items.some((item) => normalize(item.name) === normalize(typed));
-  const canCreate = typing && typed !== "" && (createWhenExact || !exact);
+  const canCreate =
+    allowCreate && typing && typed !== "" && (createWhenExact || !exact);
 
   const submit = (option: string) => {
     if (option === CREATE) {
@@ -80,6 +80,7 @@ export function CreatablePicker<T extends PickerItem>({
     } else {
       onChange({ id: Number(option) });
     }
+    setTyping(false);
     combobox.closeDropdown();
   };
 
@@ -92,7 +93,7 @@ export function CreatablePicker<T extends PickerItem>({
           label={label}
           placeholder={placeholder}
           error={error}
-          value={search}
+          value={shown}
           onChange={(event) => {
             setSearch(event.currentTarget.value);
             setTyping(true);
@@ -103,7 +104,6 @@ export function CreatablePicker<T extends PickerItem>({
           onFocus={() => combobox.openDropdown()}
           onBlur={() => {
             combobox.closeDropdown();
-            setSearch(textOf(value));
             setTyping(false);
           }}
           rightSection={
@@ -133,7 +133,9 @@ export function CreatablePicker<T extends PickerItem>({
             </Combobox.Option>
           )}
           {!matches.length && !canCreate && (
-            <Combobox.Empty>Type a name to add it</Combobox.Empty>
+            <Combobox.Empty>
+              {allowCreate ? "Type a name to add it" : "Nothing found"}
+            </Combobox.Empty>
           )}
         </Combobox.Options>
       </Combobox.Dropdown>

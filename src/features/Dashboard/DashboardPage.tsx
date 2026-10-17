@@ -1,40 +1,37 @@
-import {
-  Alert,
-  Button,
-  Center,
-  Container,
-  Group,
-  Loader,
-  SimpleGrid,
-  Stack,
-  Text,
-  Title,
-} from "@mantine/core";
-import { IconAlertCircle, IconBeer, IconSearch } from "@tabler/icons-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button, Group, Stack, Text, Title } from "@mantine/core";
+import { IconPlus, IconRefresh } from "@tabler/icons-react";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { deleteCap, getAllCaps } from "../../api/beerCaps";
-import { BeerCapCard } from "../../components/BeerCapCard";
-import { confirmDelete } from "../../utils/confirm";
+import { Link } from "react-router-dom";
+import { useAdmin } from "../../admin/adminContext";
+import { getAllCaps } from "../../api/beerCaps";
+import { getErrorMessage } from "../../api/client";
+import { CapGrid, CapTile, CapTileSkeleton } from "../../components/CapTile";
 import { pluralCaps } from "../../utils/format";
-import { notifySuccess } from "../../utils/notify";
 import { CapFilterBar } from "./CapFilterBar";
 import {
   type CapFilters,
   DEFAULT_FILTERS,
   facetOptions,
   filterAndSortCaps,
+  groupCaps,
   hasActiveFilters,
+  hasRatings,
 } from "./capFilters";
+import classes from "./DashboardPage.module.css";
 import { useCapFilters } from "./useCapFilters";
 
-export function DashboardPage() {
-  const queryClient = useQueryClient();
+const SKELETON_TILES = Array.from({ length: 16 }, (_, i) => i);
 
+export function DashboardPage() {
+  const { isAdmin } = useAdmin();
   const {
     data: caps,
     isLoading,
     isError,
+    error,
+    refetch,
+    isRefetching,
   } = useQuery({
     queryKey: ["beerCaps"],
     queryFn: getAllCaps,
@@ -45,12 +42,25 @@ export function DashboardPage() {
   const updateFilters = (changes: Partial<CapFilters>) =>
     setFilters({ ...filters, ...changes });
   const clearFilters = () =>
-    setFilters({ ...DEFAULT_FILTERS, sort: filters.sort });
+    setFilters({
+      ...DEFAULT_FILTERS,
+      sort: filters.sort,
+      group: filters.group,
+    });
 
   const allCaps = useMemo(() => caps ?? [], [caps]);
   const visibleCaps = useMemo(
     () => filterAndSortCaps(allCaps, filters),
     [allCaps, filters],
+  );
+  const groups = useMemo(
+    () => groupCaps(visibleCaps, filters.group),
+    [visibleCaps, filters.group],
+  );
+  // Previous/next on a cap's page follow the order shown here.
+  const capIds = useMemo(
+    () => groups.flatMap((group) => group.caps.map((cap) => cap.id)),
+    [groups],
   );
   const countryOptions = useMemo(
     () => facetOptions(allCaps, "country"),
@@ -59,91 +69,123 @@ export function DashboardPage() {
   const brandOptions = useMemo(() => facetOptions(allCaps, "brand"), [allCaps]);
   const filtering = hasActiveFilters(filters);
 
-  // 2. Setup Delete Mutation (for optimistic updates or refetching)
-  const deleteMutation = useMutation({
-    mutationFn: deleteCap,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["beerCaps"] });
-      notifySuccess("Cap deleted.");
-    },
-  });
+  const heading = (
+    <Group justify="space-between" align="baseline" mb="lg">
+      <Title order={1}>Collection</Title>
+      {caps && (
+        <Text c="dimmed" aria-live="polite">
+          {filtering
+            ? `${visibleCaps.length} of ${pluralCaps(allCaps.length)}`
+            : pluralCaps(allCaps.length)}
+        </Text>
+      )}
+    </Group>
+  );
 
-  const handleDelete = (id: number) => {
-    const cap = allCaps.find((c) => c.id === id);
-    confirmDelete({
-      title: cap ? `Delete this ${cap.beer.name} cap?` : "Delete this cap?",
-      message: "Its photo is deleted too. This can't be undone.",
-      onConfirm: () => deleteMutation.mutate(id),
-    });
-  };
-
-  // 3. Render States
   if (isLoading) {
     return (
-      <Center h={300}>
-        <Loader size="xl" />
-      </Center>
+      <>
+        {heading}
+        <CapGrid>
+          {SKELETON_TILES.map((i) => (
+            <CapTileSkeleton key={i} />
+          ))}
+        </CapGrid>
+      </>
     );
   }
 
   if (isError) {
     return (
-      <Container py="xl">
-        <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
-          Failed to load beer caps. Is the backend running?
-        </Alert>
-      </Container>
+      <>
+        {heading}
+        <Stack align="flex-start" gap="sm" maw={480}>
+          <Text fw={600}>The collection couldn't be loaded.</Text>
+          <Text size="sm" c="dimmed">
+            {getErrorMessage(error)}
+          </Text>
+          <Button
+            variant="default"
+            leftSection={<IconRefresh size={16} />}
+            loading={isRefetching}
+            onClick={() => refetch()}
+          >
+            Try again
+          </Button>
+        </Stack>
+      </>
+    );
+  }
+
+  if (allCaps.length === 0) {
+    return (
+      <>
+        {heading}
+        <Stack align="flex-start" gap="sm">
+          <Text fw={600}>No caps yet.</Text>
+          {isAdmin ? (
+            <Button
+              component={Link}
+              to="/add"
+              leftSection={<IconPlus size={16} />}
+            >
+              Add your first cap
+            </Button>
+          ) : (
+            <Text c="dimmed">Caps appear here once they're added.</Text>
+          )}
+        </Stack>
+      </>
     );
   }
 
   return (
-    <Container size="xl" py="xl">
-      <Group justify="space-between" align="baseline" mb="lg">
-        <Title order={2}>My Collection</Title>
-        <Text c="dimmed" aria-live="polite">
-          {filtering
-            ? `Showing ${visibleCaps.length} of ${pluralCaps(allCaps.length)}`
-            : pluralCaps(allCaps.length)}
-        </Text>
-      </Group>
+    <>
+      {heading}
+      <CapFilterBar
+        filters={filters}
+        countryOptions={countryOptions}
+        brandOptions={brandOptions}
+        showRating={hasRatings(allCaps)}
+        onChange={updateFilters}
+        onClear={clearFilters}
+        canClear={filtering}
+      />
 
-      {allCaps.length === 0 ? (
-        <Center h={200} display="flex" style={{ flexDirection: "column" }}>
-          <IconBeer size={48} color="gray" style={{ opacity: 0.5 }} />
-          <Text c="dimmed" mt="md">
-            No caps found. Start by adding one!
-          </Text>
-        </Center>
+      {visibleCaps.length === 0 ? (
+        <Stack align="flex-start" gap="sm" py="xl">
+          <Text fw={600}>No caps match these filters.</Text>
+          <Button variant="default" onClick={clearFilters}>
+            Clear filters
+          </Button>
+        </Stack>
       ) : (
-        <>
-          <CapFilterBar
-            filters={filters}
-            countryOptions={countryOptions}
-            brandOptions={brandOptions}
-            onChange={updateFilters}
-            onClear={clearFilters}
-            canClear={filtering}
-          />
-
-          {visibleCaps.length === 0 ? (
-            <Center h={200}>
-              <Stack align="center" gap="xs">
-                <IconSearch size={40} color="gray" style={{ opacity: 0.5 }} />
-                <Text c="dimmed">No caps match these filters.</Text>
-                <Button variant="light" onClick={clearFilters}>
-                  Clear filters
-                </Button>
-              </Stack>
-            </Center>
-          ) : (
-            <SimpleGrid cols={{ base: 1, xs: 2, md: 3, lg: 4 }} spacing="lg">
-              {visibleCaps.map((cap) => (
-                <BeerCapCard key={cap.id} cap={cap} onDelete={handleDelete} />
-              ))}
-            </SimpleGrid>
-          )}
-        </>
+        <Stack gap="xl">
+          {groups.map((group) => (
+            <section key={group.key} aria-label={group.title || undefined}>
+              {group.title && (
+                <Group
+                  gap="sm"
+                  align="baseline"
+                  className={classes.sectionHead}
+                >
+                  <Title order={2} fz="h3">
+                    {group.title}
+                  </Title>
+                  <Text size="sm" c="dimmed">
+                    {pluralCaps(group.caps.length)}
+                  </Text>
+                </Group>
+              )}
+              <CapGrid>
+                {group.caps.map((cap) => (
+                  <CapTile key={cap.id} cap={cap} capIds={capIds} />
+                ))}
+              </CapGrid>
+            </section>
+          ))}
+        </Stack>
       )}
-    </Container>
+    </>
   );
 }

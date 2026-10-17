@@ -26,6 +26,20 @@ export const createCap = async (formData: FormData): Promise<BeerCap> => {
   return response.data;
 };
 
+/** Gives a cap a new photo (and thumbnail). */
+export const replaceCapImage = async (
+  id: number,
+  file: File,
+): Promise<BeerCap> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await client.put<BeerCap>(
+    `/beer_caps/${id}/image/`,
+    formData,
+  );
+  return response.data;
+};
+
 /** Omitted fields are kept; `null` clears a nullable field. */
 export const updateCap = async (
   id: number,

@@ -15,6 +15,7 @@ interface PickerProps {
   value: Choice | null;
   onChange: (choice: Choice) => void;
   error?: ReactNode;
+  allowCreate?: boolean;
 }
 
 function EmptyCircle({ size }: { size: number }) {

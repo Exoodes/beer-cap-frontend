@@ -1,13 +1,11 @@
 // src/features/Dashboard/MatcherPage.tsx
 import {
-  Badge,
   Box,
   Button,
   Container,
   Group,
   LoadingOverlay,
   Paper,
-  SimpleGrid,
   Stack,
   Text,
   Title,
@@ -16,7 +14,7 @@ import { IconSearch, IconX } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { findSimilarCaps } from "../../api/matcher";
-import { BeerCapCard } from "../../components/BeerCapCard";
+import { CapGrid, CapTile } from "../../components/CapTile";
 import { ImageDropzone } from "../../components/ImageDropzone";
 import type { BeerCapWithQueryResult } from "../../types";
 
@@ -91,40 +89,26 @@ export function MatcherPage() {
             <Title order={3} mb="lg">
               Similarity Results
             </Title>
-            <SimpleGrid cols={{ base: 1, sm: 2, md: 3, lg: 4 }} spacing="lg">
+            <CapGrid>
               {results.map((result) => (
-                <Box key={result.id} pos="relative">
-                  <Badge
-                    pos="absolute"
-                    top={10}
-                    right={10}
-                    style={{ zIndex: 2 }}
-                    color="blue"
-                    variant="filled"
-                  >
-                    Match:{" "}
-                    {(result.query_result.mean_similarity * 100).toFixed(1)}%
-                  </Badge>
-                  {/* Reuse existing card logic */}
-                  <BeerCapCard
-                    cap={{
-                      id: result.id,
-                      variant_name: result.variant_name,
-                      collected_date: result.collected_date,
-                      presigned_url: result.presigned_url,
-                      // Note: Result items from similarity endpoint don't include full beer object
-                      // in this specific schema, so we pass a partial for display
-                      beer: {
-                        id: 0,
-                        name: "Similar Match",
-                        rating: 0,
-                        country: null,
-                      },
-                    }}
-                  />
-                </Box>
+                <CapTile
+                  key={result.id}
+                  // Similarity results don't include the beer; the cap's
+                  // page shows it.
+                  cap={{
+                    ...result,
+                    thumbnail_url: null,
+                    beer: { name: `Cap ${result.id}` },
+                  }}
+                  caption={
+                    <Text size="xs" c="dimmed">
+                      {(result.query_result.mean_similarity * 100).toFixed(0)}%
+                      match
+                    </Text>
+                  }
+                />
               ))}
-            </SimpleGrid>
+            </CapGrid>
           </Box>
         )}
       </Stack>

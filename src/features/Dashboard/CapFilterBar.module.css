@@ -1,0 +1,36 @@
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Phones: one row that scrolls sideways. */
+.chipsScroll {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0 calc(-1 * var(--mantine-spacing-md));
+  padding: 0 var(--mantine-spacing-md) 0.25rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chipsScroll > * {
+  flex: none;
+}
+
+.count {
+  margin-left: 0.25rem;
+  color: var(--quiet);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Phones: search and countries stay at hand while scrolling. */
+.sticky {
+  position: sticky;
+  top: var(--app-shell-header-height, 60px);
+  z-index: 5;
+  margin: 0 calc(-1 * var(--mantine-spacing-md)) var(--mantine-spacing-lg);
+  padding: 0.5rem var(--mantine-spacing-md);
+  border-bottom: 1px solid var(--line);
+  background: var(--tray);
+}

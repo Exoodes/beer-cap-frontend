@@ -1,0 +1,88 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem 0.75rem;
+}
+
+@media (min-width: 36em) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 62em) {
+  .grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 1.5rem 1.25rem;
+  }
+}
+
+@media (min-width: 75em) {
+  .grid {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+
+/* Related caps on a cap's page: one size smaller. */
+.compact {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (min-width: 62em) {
+  .compact {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 75em) {
+  .compact {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+  }
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.25rem;
+  border-radius: var(--mantine-radius-sm);
+  color: var(--ink);
+  text-align: center;
+  text-decoration: none;
+}
+
+.name {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 0.9375rem;
+  font-weight: 650;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.tile:hover .name {
+  text-decoration: underline;
+  text-decoration-color: var(--mantine-color-lager-5);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.caption {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  margin-top: -0.25rem;
+  color: var(--quiet);
+  font-size: var(--mantine-font-size-xs);
+}
+
+.skeletonCircle {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+}
