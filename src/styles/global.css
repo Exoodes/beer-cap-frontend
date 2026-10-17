@@ -1,0 +1,33 @@
+/* Design tokens. Mantine's colours point at these (see src/theme.ts). */
+:root {
+  --tray: #e7eaec;
+  --surface: #ffffff;
+  --ink: #24313b;
+  --quiet: #5a6570;
+  --line: #cdd3d8;
+  --lager-deep: #885a0a;
+  /* The only shadow in the app: under caps, so they read as objects. */
+  --cap-shadow: 0 1px 1px rgb(36 49 59 / 0.2), 0 4px 10px rgb(36 49 59 / 0.18);
+}
+
+body {
+  background: var(--tray);
+  color: var(--ink);
+}
+
+/* Headings and beer names use Archivo's condensed width, like beer labels. */
+h1,
+h2,
+h3,
+h4,
+.condensed {
+  font-stretch: 75%;
+}
+
+/* Amber on white is too faint for a focus ring; use the deep shade
+   everywhere. Mantine sets the ring colour in many component styles, so
+   overriding just the colour is the narrowest fix. */
+:focus-visible {
+  /* biome-ignore lint/complexity/noImportantStyles: see above */
+  outline-color: var(--lager-deep) !important;
+}

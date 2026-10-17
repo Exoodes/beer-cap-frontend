@@ -179,7 +179,7 @@ export function AddCapPage() {
 
   return (
     <Container size="sm" py="xl">
-      <Title mb="xl">➕ Add New Beer Cap</Title>
+      <Title mb="xl">Add a cap</Title>
 
       <form onSubmit={form.onSubmit((values) => handleSubmit(values, false))}>
         <Stack gap="lg" pos="relative">

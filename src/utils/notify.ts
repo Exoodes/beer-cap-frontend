@@ -11,5 +11,5 @@ export function notifyError(error: unknown, title = "Something went wrong") {
 }
 
 export function notifySuccess(message: string) {
-  notifications.show({ color: "teal", message, autoClose: 3000 });
+  notifications.show({ color: "bottle", message, autoClose: 3000 });
 }

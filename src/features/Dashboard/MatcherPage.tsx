@@ -46,7 +46,7 @@ export function MatcherPage() {
     <Container size="xl" py="xl">
       <Stack gap="xl">
         <Box>
-          <Title order={2}>🔍 Beer Cap Matcher</Title>
+          <Title order={2}>Matcher</Title>
           <Text c="dimmed">
             Upload a photo of a beer cap to find matches in your collection.
           </Text>

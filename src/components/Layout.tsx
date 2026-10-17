@@ -1,101 +1,122 @@
 import {
+  ActionIcon,
+  Affix,
   AppShell,
-  Badge,
   Burger,
   Button,
   Container,
   Group,
-  Title,
+  Menu,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { IconBeer, IconPlus, IconShieldCheck } from "@tabler/icons-react";
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { IconLock, IconLockOpen, IconPlus } from "@tabler/icons-react";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useAdmin } from "../admin/adminContext";
 import { useMatchingEnabled } from "../hooks/useMatchingEnabled";
+import { notifySuccess } from "../utils/notify";
+import { CapMark } from "./CapMark";
+import classes from "./Layout.module.css";
 
 export function Layout() {
-  const [opened, { toggle }] = useDisclosure();
-  const navigate = useNavigate();
-
-  const isAdmin = !!localStorage.getItem("admin_token");
+  const [menuOpened, { toggle: toggleMenu, close: closeMenu }] =
+    useDisclosure();
+  const { isAdmin, lock } = useAdmin();
   const matchingEnabled = useMatchingEnabled();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
 
-  const handleLogout = () => {
-    localStorage.removeItem("admin_token");
+  const links = [
+    { to: "/", label: "Collection" },
+    ...(isAdmin && matchingEnabled ? [{ to: "/match", label: "Matcher" }] : []),
+    ...(isAdmin ? [{ to: "/admin", label: "Admin" }] : []),
+  ];
+  // A cap's page is part of the collection.
+  const isCurrent = (to: string) =>
+    to === "/"
+      ? pathname === "/" || pathname.startsWith("/cap/")
+      : pathname.startsWith(to);
+
+  const lockAdmin = () => {
+    lock();
+    closeMenu();
     navigate("/");
-    window.location.reload(); // Force a full re-render to hide admin elements
+    notifySuccess("Admin mode locked on this device.");
   };
 
   return (
     <AppShell
       header={{ height: 60 }}
       navbar={{
-        width: 300,
+        width: 280,
         breakpoint: "sm",
-        collapsed: { mobile: !opened, desktop: true },
+        collapsed: { mobile: !menuOpened, desktop: true },
       }}
       padding="md"
     >
-      <AppShell.Header>
+      <AppShell.Header className={classes.header}>
         <Container size="xl" h="100%">
-          <Group h="100%" px="md" justify="space-between">
-            <Group gap="xs" wrap="nowrap">
+          <Group h="100%" justify="space-between" wrap="nowrap">
+            <Group gap="sm" wrap="nowrap">
               <Burger
-                opened={opened}
-                onClick={toggle}
+                opened={menuOpened}
+                onClick={toggleMenu}
                 hiddenFrom="sm"
                 size="sm"
+                aria-label={menuOpened ? "Close menu" : "Open menu"}
               />
-              {/* Change the icon color to gold if admin, otherwise blue */}
-              <IconBeer size={28} color={isAdmin ? "#fab005" : "#228be6"} />
-              <Title
-                order={3}
-                fz={{ base: "sm", xs: "h3" }}
-                style={{ whiteSpace: "nowrap" }}
-              >
-                Beer Cap Matcher
-              </Title>
-
-              {/* VISUAL INDICATOR & LOGOUT */}
-              {isAdmin && (
-                <Badge
-                  color="teal"
-                  variant="light"
-                  leftSection={<IconShieldCheck size={12} />}
-                  style={{ cursor: "pointer" }}
-                  onClick={handleLogout}
-                  title="Click to lock (Log out)"
-                >
-                  Admin
-                </Badge>
-              )}
+              <Link to="/" className={classes.brand} onClick={closeMenu}>
+                <CapMark />
+                Beer Caps
+              </Link>
             </Group>
 
-            <Group visibleFrom="sm">
-              <Button component={Link} to="/" variant="subtle">
-                Dashboard
-              </Button>
+            <Group h="100%" gap="xs" wrap="nowrap" visibleFrom="sm">
+              <nav
+                aria-label="Main"
+                style={{ display: "flex", height: "100%" }}
+              >
+                {links.map((link) => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className={classes.link}
+                    aria-current={isCurrent(link.to) ? "page" : undefined}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </nav>
               {isAdmin && (
                 <>
-                  {matchingEnabled && (
-                    <Button component={Link} to="/match" variant="subtle">
-                      Matcher
-                    </Button>
-                  )}
-                  <Button
-                    component={Link}
-                    to="/admin"
-                    variant="light"
-                    color="gray"
-                  >
-                    Admin
-                  </Button>
                   <Button
                     component={Link}
                     to="/add"
                     leftSection={<IconPlus size={16} />}
+                    ml="sm"
                   >
-                    Add Cap
+                    Add cap
                   </Button>
+                  <Menu position="bottom-end" withArrow>
+                    <Menu.Target>
+                      <ActionIcon
+                        variant="subtle"
+                        color="gray"
+                        size="lg"
+                        aria-label="Admin mode is on"
+                      >
+                        <IconLockOpen size={20} />
+                      </ActionIcon>
+                    </Menu.Target>
+                    <Menu.Dropdown>
+                      <Menu.Label>Admin mode is on</Menu.Label>
+                      <Menu.Item
+                        leftSection={<IconLock size={16} />}
+                        onClick={lockAdmin}
+                      >
+                        Lock admin mode
+                      </Menu.Item>
+                    </Menu.Dropdown>
+                  </Menu>
                 </>
               )}
             </Group>
@@ -103,47 +124,32 @@ export function Layout() {
         </Container>
       </AppShell.Header>
 
-      <AppShell.Navbar p="md">
-        <Button
-          component={Link}
-          to="/"
-          variant="subtle"
-          onClick={toggle}
-          mb="xs"
-        >
-          Dashboard
-        </Button>
+      <AppShell.Navbar py="md">
+        <nav aria-label="Main">
+          {links.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className={classes.menuLink}
+              aria-current={isCurrent(link.to) ? "page" : undefined}
+              onClick={closeMenu}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
         {isAdmin && (
-          <>
-            <Button
-              component={Link}
-              to="/add"
-              variant="subtle"
-              onClick={toggle}
-              mb="xs"
-            >
-              Add Cap
-            </Button>
-            {matchingEnabled && (
-              <Button
-                component={Link}
-                to="/match"
-                variant="subtle"
-                onClick={toggle}
-                mb="xs"
-              >
-                Find Match
-              </Button>
-            )}
-            <Button
-              component={Link}
-              to="/admin"
-              variant="subtle"
-              onClick={toggle}
-            >
-              Admin
-            </Button>
-          </>
+          <Button
+            variant="subtle"
+            color="gray"
+            c="dimmed"
+            leftSection={<IconLock size={16} />}
+            onClick={lockAdmin}
+            mt="auto"
+            mx="md"
+          >
+            Lock admin mode
+          </Button>
         )}
       </AppShell.Navbar>
 
@@ -152,6 +158,27 @@ export function Layout() {
           <Outlet />
         </Container>
       </AppShell.Main>
+
+      {isAdmin && pathname !== "/add" && !menuOpened && (
+        <Affix
+          hiddenFrom="sm"
+          position={{
+            right: "1rem",
+            bottom: "calc(1rem + env(safe-area-inset-bottom))",
+          }}
+        >
+          <ActionIcon
+            component={Link}
+            to="/add"
+            size={56}
+            radius="xl"
+            className={classes.fab}
+            aria-label="Add a cap"
+          >
+            <IconPlus size={28} />
+          </ActionIcon>
+        </Affix>
+      )}
     </AppShell>
   );
 }

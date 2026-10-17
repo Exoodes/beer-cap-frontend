@@ -1,4 +1,5 @@
 import axios, { isAxiosError } from "axios";
+import { readAdminToken } from "../admin/token";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
@@ -7,7 +8,7 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 export const client = axios.create({ baseURL: apiBaseUrl });
 
 client.interceptors.request.use((config) => {
-  const token = localStorage.getItem("admin_token");
+  const token = readAdminToken();
   if (token) {
     config.headers["X-Admin-Token"] = token;
   }

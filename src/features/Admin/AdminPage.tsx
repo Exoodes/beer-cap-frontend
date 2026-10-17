@@ -52,6 +52,8 @@ import {
 } from "../../api/references";
 import { useMatchingEnabled } from "../../hooks/useMatchingEnabled";
 import type { Beer, BeerBrandWithBeers, CountryWithBeers } from "../../types";
+import { confirmDelete } from "../../utils/confirm";
+import { pluralCaps } from "../../utils/format";
 import { notifySuccess } from "../../utils/notify";
 import { wordFilter } from "../../utils/search";
 
@@ -183,18 +185,24 @@ export function AdminPage() {
     },
   });
 
-  const handleConfirmDelete = (
-    type: string,
-    name: string,
-    action: () => void,
-  ) => {
-    if (window.confirm(`Delete ${type} "${name}"?`)) action();
+  const confirmDeleteBeer = (beer: Beer) => {
+    const caps = beer.caps?.length ?? beer.cap_count ?? 0;
+    confirmDelete({
+      title: `Delete ${beer.name}?`,
+      message:
+        caps === 0
+          ? "This can't be undone."
+          : caps === 1
+            ? "Its cap and the cap's photo are deleted too. This can't be undone."
+            : `Its ${pluralCaps(caps)} and their photos are deleted too. This can't be undone.`,
+      onConfirm: () => deleteBeerMut.mutate(beer.id),
+    });
   };
 
   return (
     <Container size="xl" py="xl">
       <Title order={2} mb="xl">
-        ⚙️ Administration Dashboard
+        Admin
       </Title>
 
       <Tabs defaultValue="beers">
@@ -291,11 +299,7 @@ export function AdminPage() {
                       <ActionIcon
                         variant="subtle"
                         color="red"
-                        onClick={() =>
-                          handleConfirmDelete("Beer", beer.name, () =>
-                            deleteBeerMut.mutate(beer.id),
-                          )
-                        }
+                        onClick={() => confirmDeleteBeer(beer)}
                       >
                         <IconTrash size={16} />
                       </ActionIcon>
@@ -349,9 +353,11 @@ export function AdminPage() {
                         variant="subtle"
                         color="red"
                         onClick={() =>
-                          handleConfirmDelete("Brand", brand.name, () =>
-                            deleteBrandMut.mutate(brand.id),
-                          )
+                          confirmDelete({
+                            title: `Delete the brand ${brand.name}?`,
+                            message: "This can't be undone.",
+                            onConfirm: () => deleteBrandMut.mutate(brand.id),
+                          })
                         }
                       >
                         <IconTrash size={16} />
@@ -403,9 +409,11 @@ export function AdminPage() {
                         variant="subtle"
                         color="red"
                         onClick={() =>
-                          handleConfirmDelete("Country", c.name, () =>
-                            deleteCountryMut.mutate(c.id),
-                          )
+                          confirmDelete({
+                            title: `Delete ${c.name}?`,
+                            message: "This can't be undone.",
+                            onConfirm: () => deleteCountryMut.mutate(c.id),
+                          })
                         }
                       >
                         <IconTrash size={16} />
@@ -474,9 +482,12 @@ export function AdminPage() {
                       variant="subtle"
                       color="red"
                       onClick={() =>
-                        handleConfirmDelete("Backup", backup.name, () =>
-                          deleteBackupMut.mutate(backup.name),
-                        )
+                        confirmDelete({
+                          title: `Delete the backup ${backup.name}?`,
+                          message:
+                            "Its files are removed from the server. This can't be undone.",
+                          onConfirm: () => deleteBackupMut.mutate(backup.name),
+                        })
                       }
                       loading={deleteBackupMut.isPending}
                     >
