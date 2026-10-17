@@ -38,7 +38,7 @@ export function Layout() {
       <AppShell.Header>
         <Container size="xl" h="100%">
           <Group h="100%" px="md" justify="space-between">
-            <Group>
+            <Group gap="xs" wrap="nowrap">
               <Burger
                 opened={opened}
                 onClick={toggle}
@@ -47,7 +47,13 @@ export function Layout() {
               />
               {/* Change the icon color to gold if admin, otherwise blue */}
               <IconBeer size={28} color={isAdmin ? "#fab005" : "#228be6"} />
-              <Title order={3}>Beer Cap Matcher</Title>
+              <Title
+                order={3}
+                fz={{ base: "sm", xs: "h3" }}
+                style={{ whiteSpace: "nowrap" }}
+              >
+                Beer Cap Matcher
+              </Title>
 
               {/* VISUAL INDICATOR & LOGOUT */}
               {isAdmin && (

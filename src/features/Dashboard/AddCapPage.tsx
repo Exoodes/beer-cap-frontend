@@ -8,6 +8,7 @@ import {
   NumberInput,
   Paper,
   Select,
+  SimpleGrid,
   Stack,
   Switch,
   Text,
@@ -16,19 +17,21 @@ import {
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useForm } from "@mantine/form";
-import { IconCheck } from "@tabler/icons-react";
+import { IconCheck, IconPlus } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createCap } from "../../api/beerCaps";
 import { getBeers, getBrands, getCountries } from "../../api/references";
 import { ImageDropzone } from "../../components/ImageDropzone";
-import { notifySuccess } from "../../utils/notify";
+import { notifyError, notifySuccess } from "../../utils/notify";
+import { prepareImageForUpload } from "../../utils/prepareImage";
 
 export function AddCapPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
+  const [preparing, setPreparing] = useState(false);
 
   // 1. Fetch Reference Data
   const { data: beers = [] } = useQuery({
@@ -82,7 +85,6 @@ export function AddCapPage() {
     },
   });
 
-  // 3. Mutation for creating the cap
   const mutation = useMutation({
     mutationFn: createCap,
     onSuccess: () => {
@@ -90,12 +92,29 @@ export function AddCapPage() {
       queryClient.invalidateQueries({ queryKey: ["beers"] });
       queryClient.invalidateQueries({ queryKey: ["brands"] });
       queryClient.invalidateQueries({ queryKey: ["countries"] });
-      notifySuccess("Cap added.");
-      navigate("/");
     },
   });
 
-  const handleSubmit = (values: typeof form.values) => {
+  const handlePick = async (picked: File) => {
+    setPreparing(true);
+    try {
+      setFile(await prepareImageForUpload(picked));
+      form.clearFieldError("file");
+    } finally {
+      setPreparing(false);
+    }
+  };
+
+  const startNextCap = () => {
+    // Caps are often added in a batch on the same day: keep the date.
+    const { collected_date } = form.values;
+    form.reset();
+    form.setFieldValue("collected_date", collected_date);
+    setFile(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleSubmit = (values: typeof form.values, addAnother: boolean) => {
     if (!file) return;
     const formData = new FormData();
     formData.append("file", file);
@@ -120,7 +139,17 @@ export function AddCapPage() {
     } else if (values.beer_id) {
       formData.append("beer_id", values.beer_id);
     }
-    mutation.mutate(formData);
+    mutation.mutate(formData, {
+      onSuccess: () => {
+        if (addAnother) {
+          notifySuccess("Cap added. Ready for the next one.");
+          startNextCap();
+        } else {
+          notifySuccess("Cap added.");
+          navigate("/");
+        }
+      },
+    });
   };
 
   // UPDATED: Combined Beer and Brand label for the dropdown
@@ -145,7 +174,7 @@ export function AddCapPage() {
     <Container size="sm" py="xl">
       <Title mb="xl">➕ Add New Beer Cap</Title>
 
-      <form onSubmit={form.onSubmit(handleSubmit)}>
+      <form onSubmit={form.onSubmit((values) => handleSubmit(values, false))}>
         <Stack gap="lg" pos="relative">
           <LoadingOverlay
             visible={mutation.isPending}
@@ -158,11 +187,12 @@ export function AddCapPage() {
             </Text>
             <ImageDropzone
               image={file}
-              onDrop={(f) => {
-                setFile(f);
-                form.clearFieldError("file");
-              }}
+              onDrop={handlePick}
               onClear={() => setFile(null)}
+              onReject={(message) =>
+                notifyError(new Error(message), "Photo not added")
+              }
+              busy={preparing}
             />
             {form.errors.file && (
               <Text c="red" size="sm" mt={4}>
@@ -171,7 +201,7 @@ export function AddCapPage() {
             )}
           </Paper>
 
-          <Group grow>
+          <SimpleGrid cols={{ base: 1, xs: 2 }}>
             <TextInput
               label="Variant Name"
               placeholder="e.g. 'Gold Edition'"
@@ -185,7 +215,7 @@ export function AddCapPage() {
               maxDate={new Date()}
               {...form.getInputProps("collected_date")}
             />
-          </Group>
+          </SimpleGrid>
 
           <Paper withBorder p="md" radius="md" bg="var(--mantine-color-gray-0)">
             <Group justify="space-between" mb="xs">
@@ -284,8 +314,20 @@ export function AddCapPage() {
               Cancel
             </Button>
             <Button
+              variant="light"
+              loading={mutation.isPending}
+              disabled={preparing}
+              leftSection={<IconPlus size={16} />}
+              onClick={() =>
+                form.onSubmit((values) => handleSubmit(values, true))()
+              }
+            >
+              Save & add another
+            </Button>
+            <Button
               type="submit"
               loading={mutation.isPending}
+              disabled={preparing}
               leftSection={<IconCheck size={16} />}
             >
               Save Cap
