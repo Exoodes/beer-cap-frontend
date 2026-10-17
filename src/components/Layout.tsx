@@ -1,20 +1,20 @@
 import {
   ActionIcon,
-  Affix,
-  AppShell,
   Burger,
   Button,
   Container,
-  Group,
+  Drawer,
   Menu,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconLock, IconLockOpen, IconPlus } from "@tabler/icons-react";
+import { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAdmin } from "../admin/adminContext";
 import { useMatchingEnabled } from "../hooks/useMatchingEnabled";
 import { notifySuccess } from "../utils/notify";
 import { CapMark } from "./CapMark";
+import { HeaderSlotContext } from "./headerSlotContext";
 import classes from "./Layout.module.css";
 
 export function Layout() {
@@ -24,9 +24,10 @@ export function Layout() {
   const matchingEnabled = useMatchingEnabled();
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const [searchSlot, setSearchSlot] = useState<HTMLDivElement | null>(null);
 
+  // The name links to the collection; the rest of the menu is admin-only.
   const links = [
-    { to: "/", label: "Collection" },
     ...(isAdmin && matchingEnabled ? [{ to: "/match", label: "Matcher" }] : []),
     ...(isAdmin ? [{ to: "/admin", label: "Admin" }] : []),
   ];
@@ -44,37 +45,18 @@ export function Layout() {
   };
 
   return (
-    <AppShell
-      header={{ height: 60 }}
-      navbar={{
-        width: 280,
-        breakpoint: "sm",
-        collapsed: { mobile: !menuOpened, desktop: true },
-      }}
-      padding="md"
-    >
-      <AppShell.Header className={classes.header}>
-        <Container size="xl" h="100%">
-          <Group h="100%" justify="space-between" wrap="nowrap">
-            <Group gap="sm" wrap="nowrap">
-              <Burger
-                opened={menuOpened}
-                onClick={toggleMenu}
-                hiddenFrom="sm"
-                size="sm"
-                aria-label={menuOpened ? "Close menu" : "Open menu"}
-              />
-              <Link to="/" className={classes.brand} onClick={closeMenu}>
-                <CapMark />
-                Beer Caps
-              </Link>
-            </Group>
+    <>
+      <header>
+        <Container size="xl" className={classes.header}>
+          <Link to="/" className={`${classes.brand} display`}>
+            <CapMark />
+            Beer Caps
+          </Link>
+          <div ref={setSearchSlot} className={classes.searchSlot} />
 
-            <Group h="100%" gap="xs" wrap="nowrap" visibleFrom="sm">
-              <nav
-                aria-label="Main"
-                style={{ display: "flex", height: "100%" }}
-              >
+          {isAdmin && (
+            <>
+              <nav aria-label="Main" className={classes.nav}>
                 {links.map((link) => (
                   <Link
                     key={link.to}
@@ -86,99 +68,101 @@ export function Layout() {
                   </Link>
                 ))}
               </nav>
-              {isAdmin && (
-                <>
-                  <Button
-                    component={Link}
-                    to="/add"
-                    leftSection={<IconPlus size={16} />}
-                    ml="sm"
+              <Button
+                component={Link}
+                to="/add"
+                size="md"
+                leftSection={<IconPlus size={18} stroke={2.5} />}
+                className={classes.wide}
+              >
+                Add cap
+              </Button>
+              <Menu position="bottom-end" withArrow>
+                <Menu.Target>
+                  <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    size={48}
+                    radius="xl"
+                    aria-label="Admin mode is on"
+                    className={classes.wide}
                   >
-                    Add cap
-                  </Button>
-                  <Menu position="bottom-end" withArrow>
-                    <Menu.Target>
-                      <ActionIcon
-                        variant="subtle"
-                        color="gray"
-                        size="lg"
-                        aria-label="Admin mode is on"
-                      >
-                        <IconLockOpen size={20} />
-                      </ActionIcon>
-                    </Menu.Target>
-                    <Menu.Dropdown>
-                      <Menu.Label>Admin mode is on</Menu.Label>
-                      <Menu.Item
-                        leftSection={<IconLock size={16} />}
-                        onClick={lockAdmin}
-                      >
-                        Lock admin mode
-                      </Menu.Item>
-                    </Menu.Dropdown>
-                  </Menu>
-                </>
-              )}
-            </Group>
-          </Group>
+                    <IconLockOpen size={20} />
+                  </ActionIcon>
+                </Menu.Target>
+                <Menu.Dropdown>
+                  <Menu.Label>Admin mode is on</Menu.Label>
+                  <Menu.Item
+                    leftSection={<IconLock size={16} />}
+                    onClick={lockAdmin}
+                  >
+                    Lock admin mode
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+              <Burger
+                opened={menuOpened}
+                onClick={toggleMenu}
+                hiddenFrom="sm"
+                aria-label={menuOpened ? "Close menu" : "Open menu"}
+                className={classes.burger}
+              />
+            </>
+          )}
         </Container>
-      </AppShell.Header>
+      </header>
 
-      <AppShell.Navbar py="md">
-        <nav aria-label="Main">
-          {links.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className={classes.menuLink}
-              aria-current={isCurrent(link.to) ? "page" : undefined}
-              onClick={closeMenu}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-        {isAdmin && (
+      {isAdmin && (
+        <Drawer
+          opened={menuOpened}
+          onClose={closeMenu}
+          position="right"
+          size="xs"
+          title={<span className="display">Beer Caps</span>}
+          hiddenFrom="sm"
+        >
+          <nav aria-label="Main" className={classes.menu}>
+            {[{ to: "/", label: "Collection" }, ...links].map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className={classes.menuLink}
+                aria-current={isCurrent(link.to) ? "page" : undefined}
+                onClick={closeMenu}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+          <Button
+            component={Link}
+            to="/add"
+            size="md"
+            fullWidth
+            leftSection={<IconPlus size={18} stroke={2.5} />}
+            onClick={closeMenu}
+            mt="lg"
+          >
+            Add cap
+          </Button>
           <Button
             variant="subtle"
             color="gray"
-            c="dimmed"
+            fullWidth
             leftSection={<IconLock size={16} />}
             onClick={lockAdmin}
-            mt="auto"
-            mx="md"
+            mt="xs"
           >
             Lock admin mode
           </Button>
-        )}
-      </AppShell.Navbar>
+        </Drawer>
+      )}
 
-      <AppShell.Main>
-        <Container size="xl">
+      <HeaderSlotContext.Provider value={searchSlot}>
+        <Container size="xl" component="main" className={classes.main}>
           <Outlet />
         </Container>
-      </AppShell.Main>
-
-      {isAdmin && pathname !== "/add" && !menuOpened && (
-        <Affix
-          hiddenFrom="sm"
-          position={{
-            right: "1rem",
-            bottom: "calc(1rem + env(safe-area-inset-bottom))",
-          }}
-        >
-          <ActionIcon
-            component={Link}
-            to="/add"
-            size={56}
-            radius="xl"
-            className={classes.fab}
-            aria-label="Add a cap"
-          >
-            <IconPlus size={28} />
-          </ActionIcon>
-        </Affix>
-      )}
-    </AppShell>
+      </HeaderSlotContext.Provider>
+    </>
   );
 }

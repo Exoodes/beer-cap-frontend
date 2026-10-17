@@ -3,9 +3,9 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--line);
+  border: 1px solid var(--rule);
   border-radius: var(--mantine-radius-sm);
-  background: var(--surface);
+  background: var(--raised);
 }
 
 .row {
@@ -17,7 +17,7 @@
 }
 
 .row + .row {
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--rule);
 }
 
 .main {

@@ -3,47 +3,71 @@ import type { BeerCap } from "../types";
 import { getImageUrl } from "../utils/imageUtils";
 import classes from "./CapCircle.module.css";
 
-type CapCircleProps = {
-  alt: string;
-  /** Diameter in px; without it the circle fills its container's width. */
+interface SocketProps {
+  /** Diameter in px; without it the socket fills its container's width. */
   size?: number;
+  /** A larger, deeper socket for the cap's own page. */
+  deep?: boolean;
+  /** Brass socket, e.g. for the photo being added. */
+  highlighted?: boolean;
+  /** Pairs this socket with one on the next page, so the cap moves across. */
+  transitionName?: string;
+}
+
+type CapCircleProps = SocketProps & {
+  alt: string;
   /** Load the full photo rather than the thumbnail (large views). */
   full?: boolean;
-  /** Amber ring, e.g. for the photo being added. */
-  highlighted?: boolean;
 } & (
-  | { cap: Pick<BeerCap, "thumbnail_url" | "presigned_url">; file?: never }
-  | { file: File; cap?: never }
-);
+    | { cap: Pick<BeerCap, "thumbnail_url" | "presigned_url">; file?: never }
+    | { file: File; cap?: never }
+  );
 
 /**
- * A cap shown as what it is: round and uncropped, with the one shared
- * shadow. A missing thumbnail falls back to the full photo, then to an
- * empty circle.
+ * A round hole in the felt. Empty, it stands for a cap still loading or
+ * not there; see CapCircle for one with a cap in it.
  */
-export function CapCircle({
-  alt,
+export function CapSocket({
   size,
-  full,
+  deep,
   highlighted,
-  cap,
-  file,
-}: CapCircleProps) {
-  const style = size
-    ? { width: size, height: size }
-    : { width: "100%", aspectRatio: "1" };
-  const className = highlighted
-    ? `${classes.circle} ${classes.highlighted}`
-    : classes.circle;
-
+  transitionName,
+  children,
+}: SocketProps & { children?: React.ReactNode }) {
+  const className = [
+    classes.socket,
+    deep && classes.deep,
+    highlighted && classes.highlighted,
+  ]
+    .filter(Boolean)
+    .join(" ");
   return (
-    <span className={className} style={style}>
+    <span
+      className={className}
+      style={{
+        width: size ?? "100%",
+        height: size,
+        viewTransitionName: transitionName,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+/**
+ * A cap shown as what it is: round, uncropped, seated in its socket. A
+ * missing thumbnail falls back to the full photo, then to an empty socket.
+ */
+export function CapCircle({ alt, full, cap, file, ...socket }: CapCircleProps) {
+  return (
+    <CapSocket {...socket}>
       {file ? (
         <FileImage file={file} alt={alt} />
       ) : (
         <CapImage key={cap.presigned_url} cap={cap} alt={alt} full={full} />
       )}
-    </span>
+    </CapSocket>
   );
 }
 
@@ -56,13 +80,25 @@ function CapImage({
   alt: string;
   full?: boolean;
 }) {
-  const sources = (
-    full ? [cap.presigned_url] : [cap.thumbnail_url, cap.presigned_url]
-  )
+  const sources = [cap.thumbnail_url, cap.presigned_url]
     .filter((url): url is string => !!url)
     .map(getImageUrl);
   const [failed, setFailed] = useState(0);
-  const src = sources[failed];
+  // A full photo starts as the thumbnail, which the collection has already
+  // loaded, so a cap opened from it lands in its socket at once; the
+  // photo replaces it when it has loaded.
+  const fullUrl = full ? getImageUrl(cap.presigned_url) : null;
+  const [fullLoaded, setFullLoaded] = useState(false);
+  useEffect(() => {
+    if (!fullUrl) return;
+    const image = new Image();
+    image.onload = () => setFullLoaded(true);
+    image.src = fullUrl;
+    return () => {
+      image.onload = null;
+    };
+  }, [fullUrl]);
+  const src = fullUrl && fullLoaded ? fullUrl : sources[failed];
   if (!src) return null;
   return (
     <img

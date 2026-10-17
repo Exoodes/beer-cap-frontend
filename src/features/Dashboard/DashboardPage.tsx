@@ -1,4 +1,4 @@
-import { Button, Group, Stack, Text, Title } from "@mantine/core";
+import { Button, Stack, Text, Title, VisuallyHidden } from "@mantine/core";
 import { IconPlus, IconRefresh } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
@@ -7,8 +7,14 @@ import { useAdmin } from "../../admin/adminContext";
 import { getAllCaps } from "../../api/beerCaps";
 import { getErrorMessage } from "../../api/client";
 import { CapGrid, CapTile, CapTileSkeleton } from "../../components/CapTile";
+import { HeaderSlot } from "../../components/HeaderSlot";
 import { pluralCaps } from "../../utils/format";
-import { CapFilterBar } from "./CapFilterBar";
+import {
+  CapSearch,
+  CountryChips,
+  FilterMenus,
+  PhoneFilterBar,
+} from "./CapFilterBar";
 import {
   type CapFilters,
   DEFAULT_FILTERS,
@@ -68,29 +74,30 @@ export function DashboardPage() {
   );
   const brandOptions = useMemo(() => facetOptions(allCaps, "brand"), [allCaps]);
   const filtering = hasActiveFilters(filters);
+  const filterProps = {
+    filters,
+    brandOptions,
+    showRating: hasRatings(allCaps),
+    onChange: updateFilters,
+  };
 
   const heading = (
-    <Group justify="space-between" align="baseline" mb="lg">
+    <VisuallyHidden>
       <Title order={1}>Collection</Title>
-      {caps && (
-        <Text c="dimmed" aria-live="polite">
-          {filtering
-            ? `${visibleCaps.length} of ${pluralCaps(allCaps.length)}`
-            : pluralCaps(allCaps.length)}
-        </Text>
-      )}
-    </Group>
+    </VisuallyHidden>
   );
 
   if (isLoading) {
     return (
       <>
         {heading}
-        <CapGrid>
-          {SKELETON_TILES.map((i) => (
-            <CapTileSkeleton key={i} />
-          ))}
-        </CapGrid>
+        <div className={classes.board}>
+          <CapGrid>
+            {SKELETON_TILES.map((i) => (
+              <CapTileSkeleton key={i} />
+            ))}
+          </CapGrid>
+        </div>
       </>
     );
   }
@@ -99,7 +106,7 @@ export function DashboardPage() {
     return (
       <>
         {heading}
-        <Stack align="flex-start" gap="sm" maw={480}>
+        <Stack align="flex-start" gap="sm" maw={480} mt="md">
           <Text fw={600}>The collection couldn't be loaded.</Text>
           <Text size="sm" c="dimmed">
             {getErrorMessage(error)}
@@ -121,7 +128,7 @@ export function DashboardPage() {
     return (
       <>
         {heading}
-        <Stack align="flex-start" gap="sm">
+        <Stack align="flex-start" gap="sm" mt="md">
           <Text fw={600}>No caps yet.</Text>
           {isAdmin ? (
             <Button
@@ -139,18 +146,46 @@ export function DashboardPage() {
     );
   }
 
+  const countries = countryOptions.length;
+  const summary = filtering
+    ? `${visibleCaps.length} of ${pluralCaps(allCaps.length)}`
+    : `${pluralCaps(allCaps.length)} from ${countries} ${countries === 1 ? "country" : "countries"}`;
+
   return (
-    <>
+    <div className={classes.page}>
       {heading}
-      <CapFilterBar
-        filters={filters}
-        countryOptions={countryOptions}
-        brandOptions={brandOptions}
-        showRating={hasRatings(allCaps)}
-        onChange={updateFilters}
-        onClear={clearFilters}
-        canClear={filtering}
-      />
+      <HeaderSlot>
+        <CapSearch
+          value={filters.q}
+          onChange={updateFilters}
+          placeholder="Find a cap by beer, brand or country"
+        />
+      </HeaderSlot>
+
+      <div className={classes.controls}>
+        <div className={classes.summaryRow}>
+          <p className={classes.summary} aria-live="polite">
+            {summary}
+          </p>
+          {filtering && (
+            <Button
+              variant="subtle"
+              color="gray"
+              size="compact-sm"
+              onClick={clearFilters}
+            >
+              Clear filters
+            </Button>
+          )}
+          <FilterMenus {...filterProps} />
+        </div>
+        <CountryChips
+          value={filters.countries}
+          options={countryOptions}
+          total={allCaps.length}
+          onChange={updateFilters}
+        />
+      </div>
 
       {visibleCaps.length === 0 ? (
         <Stack align="flex-start" gap="sm" py="xl">
@@ -160,22 +195,18 @@ export function DashboardPage() {
           </Button>
         </Stack>
       ) : (
-        <Stack gap="xl">
+        <div className={classes.board}>
           {groups.map((group) => (
-            <section key={group.key} aria-label={group.title || undefined}>
+            <section
+              key={group.key}
+              aria-label={group.title || undefined}
+              className={classes.group}
+            >
               {group.title && (
-                <Group
-                  gap="sm"
-                  align="baseline"
-                  className={classes.sectionHead}
-                >
-                  <Title order={2} fz="h3">
-                    {group.title}
-                  </Title>
-                  <Text size="sm" c="dimmed">
-                    {pluralCaps(group.caps.length)}
-                  </Text>
-                </Group>
+                <div className={classes.plate}>
+                  <Title order={2}>{group.title}</Title>
+                  <span>{pluralCaps(group.caps.length)}</span>
+                </div>
               )}
               <CapGrid>
                 {group.caps.map((cap) => (
@@ -184,8 +215,14 @@ export function DashboardPage() {
               </CapGrid>
             </section>
           ))}
-        </Stack>
+        </div>
       )}
-    </>
+
+      <PhoneFilterBar
+        {...filterProps}
+        isAdmin={isAdmin}
+        shown={visibleCaps.length}
+      />
+    </div>
   );
 }

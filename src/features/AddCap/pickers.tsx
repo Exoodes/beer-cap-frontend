@@ -1,6 +1,6 @@
 import { Group, Stack, Text } from "@mantine/core";
 import type { ReactNode } from "react";
-import { CapCircle } from "../../components/CapCircle";
+import { CapCircle, CapSocket } from "../../components/CapCircle";
 import { type Choice, CreatablePicker } from "../../components/CreatablePicker";
 import type {
   Beer,
@@ -16,20 +16,6 @@ interface PickerProps {
   onChange: (choice: Choice) => void;
   error?: ReactNode;
   allowCreate?: boolean;
-}
-
-function EmptyCircle({ size }: { size: number }) {
-  return (
-    <span
-      style={{
-        width: size,
-        height: size,
-        borderRadius: "50%",
-        border: "1px dashed var(--line)",
-        flex: "none",
-      }}
-    />
-  );
 }
 
 /** Beers with their newest cap, brand, country and how many caps you have. */
@@ -70,7 +56,7 @@ export function BeerPicker({
             {caps[0] ? (
               <CapCircle cap={caps[0]} alt="" size={40} />
             ) : (
-              <EmptyCircle size={40} />
+              <CapSocket size={40} />
             )}
             <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
               <Text size="sm" fw={600} truncate>

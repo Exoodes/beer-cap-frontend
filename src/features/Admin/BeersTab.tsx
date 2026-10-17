@@ -15,7 +15,7 @@ import {
   getCountries,
   mergeBeer,
 } from "../../api/references";
-import { CapCircle } from "../../components/CapCircle";
+import { CapCircle, CapSocket } from "../../components/CapCircle";
 import type { Beer } from "../../types";
 import { confirmDelete } from "../../utils/confirm";
 import { pluralCaps } from "../../utils/format";
@@ -27,17 +27,7 @@ import { AdminList, AdminRow } from "./AdminList";
 import { EditBeerForm } from "./editForms";
 import { MergeModal } from "./MergeModal";
 
-const EMPTY_THUMB = (
-  <span
-    style={{
-      width: 40,
-      height: 40,
-      borderRadius: "50%",
-      border: "1px dashed var(--line)",
-      flex: "none",
-    }}
-  />
-);
+const EMPTY_THUMB = <CapSocket size={40} />;
 
 export function BeersTab() {
   const queryClient = useQueryClient();

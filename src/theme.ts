@@ -1,24 +1,30 @@
-// The app's look: a quiet aluminium-grey tray so the caps carry the colour,
-// one lager-amber accent for actions, and Archivo (condensed for headings).
+// The app's look: a display board of green felt so the caps carry the
+// colour, brass for actions, Big Shoulders Display for names and headings,
+// Archivo for everything you read or type. Mantine runs in its dark scheme,
+// with its "dark" greys replaced by the felt's greens.
 import {
   Badge,
+  Button,
   type CSSVariablesResolver,
   createTheme,
+  Input,
   type MantineColorsTuple,
+  Modal,
 } from "@mantine/core";
+import classes from "./styles/theme.module.css";
 
-/** Lager amber. Shade 5 fills buttons (dark text); 8 is for text on light. */
-const lager: MantineColorsTuple = [
-  "#FFF8E6",
-  "#FCEFC9",
-  "#F7DE95",
-  "#F1CB5D",
-  "#E8B53A",
-  "#DCA126",
-  "#CF9419",
-  "#A9710C",
-  "#885A0A",
-  "#664306",
+/** Brass. Shade 5 fills buttons (dark text). */
+const brass: MantineColorsTuple = [
+  "#FDF6E3",
+  "#F9EAC2",
+  "#F3D88E",
+  "#EDC664",
+  "#E6B84D",
+  "#E0AE3E",
+  "#C9952E",
+  "#A97B22",
+  "#8A6414",
+  "#664806",
 ];
 
 /** Bottle green, for confirmations ("Saved"). */
@@ -35,25 +41,44 @@ const bottle: MantineColorsTuple = [
   "#133321",
 ];
 
+/**
+ * The felt, light to dark, where Mantine expects its dark greys:
+ * 0 text, 2 quiet text, 4 borders, 6 inputs and default buttons,
+ * 7 the page, modals and menus.
+ */
+const dark: MantineColorsTuple = [
+  "#EEF1E7",
+  "#C9D5CC",
+  "#A8BCAD",
+  "#8DA393",
+  "#3B5A47",
+  "#2F4C3B",
+  "#1C3427",
+  "#24402F",
+  "#172C21",
+  "#122218",
+];
+
 const FONT = "Archivo, system-ui, -apple-system, 'Segoe UI', sans-serif";
+const DISPLAY = "'Big Shoulders Display', 'Archivo Narrow', sans-serif";
 
 export const theme = createTheme({
-  primaryColor: "lager",
+  primaryColor: "brass",
   primaryShade: 5,
-  colors: { lager, bottle },
-  // Picks dark or light text from the fill: ink on amber, white on green.
+  colors: { brass, bottle, dark },
+  // Picks dark or light text from the fill: ink on brass, white on red.
   autoContrast: true,
-  black: "#24313B",
+  black: "#18261D",
   white: "#FFFFFF",
   fontFamily: FONT,
   headings: {
-    fontFamily: FONT,
-    fontWeight: "700",
+    fontFamily: DISPLAY,
+    fontWeight: "800",
     sizes: {
-      h1: { fontSize: "2.5rem", lineHeight: "1.1" },
-      h2: { fontSize: "1.75rem", lineHeight: "1.15" },
-      h3: { fontSize: "1.25rem", lineHeight: "1.2" },
-      h4: { fontSize: "1rem", lineHeight: "1.3" },
+      h1: { fontSize: "3rem", lineHeight: "0.95" },
+      h2: { fontSize: "2rem", lineHeight: "1" },
+      h3: { fontSize: "1.625rem", lineHeight: "1.05" },
+      h4: { fontSize: "1.25rem", lineHeight: "1.1" },
     },
   },
   fontSizes: {
@@ -64,36 +89,37 @@ export const theme = createTheme({
     xl: "1.25rem",
   },
   lineHeights: { md: "1.45" },
-  defaultRadius: "sm",
+  defaultRadius: "md",
   components: {
     Badge: Badge.extend({
       styles: { root: { textTransform: "none", letterSpacing: 0 } },
     }),
+    // Pill buttons, like the chips and the search box.
+    Button: Button.extend({ defaultProps: { radius: "xl" } }),
+    // Inputs are sunk into the felt, like the sockets.
+    Input: Input.extend({ classNames: { input: classes.input } }),
+    Modal: Modal.extend({ classNames: { content: classes.modal } }),
   },
 });
 
-/**
- * Colours Mantine derives from the primary colour, adjusted so text stays
- * readable: amber text on white is too faint, so text uses the deep shade.
- * Mantine's "body" colour stays white (modals, menus, the header use it);
- * only the page itself is the grey tray, set in global.css.
- */
 export const cssVariablesResolver: CSSVariablesResolver = () => ({
   variables: {},
-  light: {
-    "--mantine-color-text": "var(--ink)",
-    "--mantine-color-dimmed": "var(--quiet)",
-    "--mantine-color-anchor": "var(--mantine-color-lager-8)",
-    "--mantine-color-lager-text": "var(--mantine-color-lager-8)",
-    "--mantine-color-lager-light": "var(--mantine-color-lager-1)",
-    "--mantine-color-lager-light-hover": "var(--mantine-color-lager-2)",
-    "--mantine-color-lager-light-color": "var(--mantine-color-lager-9)",
-    "--mantine-color-lager-outline": "var(--mantine-color-lager-8)",
-    // Mantine's red is about 3:1 on white; one shade darker for text and fills.
-    "--mantine-color-red-text": "var(--mantine-color-red-8)",
-    "--mantine-color-red-light-color": "var(--mantine-color-red-8)",
+  light: {},
+  dark: {
+    "--mantine-color-body": "var(--felt)",
+    "--mantine-color-text": "var(--foam)",
+    "--mantine-color-dimmed": "var(--hop)",
+    "--mantine-color-anchor": "var(--brass)",
+    "--mantine-color-default": "var(--raised)",
+    "--mantine-color-default-hover": "#2F4C3B",
+    "--mantine-color-default-border": "var(--rule)",
+    "--mantine-color-brass-text": "var(--brass)",
+    "--mantine-color-brass-light-color": "var(--brass)",
+    // Mantine's dark red text is too pink on green; a clearer red.
+    "--mantine-color-red-text": "#FF8A7A",
+    "--mantine-color-red-light-color": "#FF8A7A",
     "--mantine-color-red-filled": "var(--mantine-color-red-8)",
     "--mantine-color-red-filled-hover": "var(--mantine-color-red-9)",
+    "--mantine-color-error": "#FF8A7A",
   },
-  dark: {},
 });

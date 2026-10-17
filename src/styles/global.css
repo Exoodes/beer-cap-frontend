@@ -1,33 +1,57 @@
-/* Design tokens. Mantine's colours point at these (see src/theme.ts). */
+/* Design tokens. Mantine's colours point at these (see src/theme.ts).
+   The app is a collector's display board: green felt, caps seated in
+   round sockets, brass for actions, a white tag for a cap's details. */
 :root {
-  --tray: #e7eaec;
-  --surface: #ffffff;
-  --ink: #24313b;
-  --quiet: #5a6570;
-  --line: #cdd3d8;
-  --lager-deep: #885a0a;
-  /* The only shadow in the app: under caps, so they read as objects. */
-  --cap-shadow: 0 1px 1px rgb(36 49 59 / 0.2), 0 4px 10px rgb(36 49 59 / 0.18);
+  --felt: #24402f;
+  /* Pressed into the felt: chips, default buttons. */
+  --raised: #1c3427;
+  /* Sockets and inputs, the deepest surface. */
+  --socket: #172c21;
+  --rule: #3b5a47;
+  --foam: #eef1e7;
+  --hop: #a8bcad;
+  --brass: #e0ae3e;
+  --brass-deep: #8a6414;
+  --tag: #fbfbf7;
+  --tag-ink: #18261d;
+  --tag-quiet: #5b6a60;
+  --tag-danger: #a3261b;
+  --display: "Big Shoulders Display", "Archivo Narrow", sans-serif;
+  --pressed: inset 0 1px 3px rgb(0 0 0 / 0.45);
 }
 
 body {
-  background: var(--tray);
-  color: var(--ink);
+  background: var(--felt);
+  color: var(--foam);
 }
 
-/* Headings and beer names use Archivo's condensed width, like beer labels. */
-h1,
-h2,
-h3,
-h4,
-.condensed {
-  font-stretch: 75%;
+/* Headings and beer names: narrow printed lettering, like on the caps. */
+.display {
+  font-family: var(--display);
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
-/* Amber on white is too faint for a focus ring; use the deep shade
-   everywhere. Mantine sets the ring colour in many component styles, so
-   overriding just the colour is the narrowest fix. */
+/* The brass focus ring reads on felt and on the white tag alike. Mantine
+   sets the ring colour in many component styles, so overriding just the
+   colour is the narrowest fix. */
 :focus-visible {
   /* biome-ignore lint/complexity/noImportantStyles: see above */
-  outline-color: var(--lager-deep) !important;
+  outline-color: var(--brass) !important;
+}
+
+/* Opening a cap lifts it out of its socket (see CapCircle's
+   view-transition-name); nothing else animates. */
+::view-transition-group(*) {
+  animation-duration: 280ms;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    /* biome-ignore lint/complexity/noImportantStyles: overrides the UA animation */
+    animation: none !important;
+  }
 }
