@@ -58,7 +58,7 @@ export function CapFilterBar({
   const search = (
     <TextInput
       aria-label="Search"
-      placeholder="Search beer, brewery, country or variant"
+      placeholder="Search beer, brand, country or variant"
       leftSection={<IconSearch size={16} />}
       value={filters.q}
       onChange={(e) => onChange({ q: e.currentTarget.value })}
@@ -102,8 +102,8 @@ export function CapFilterBar({
   const more = (
     <>
       <MultiSelect
-        aria-label="Brewery"
-        placeholder={filters.brands.length ? undefined : "Any brewery"}
+        aria-label="Brand"
+        placeholder={filters.brands.length ? undefined : "Any brand"}
         data={brandOptions}
         value={filters.brands}
         onChange={(brands) => onChange({ brands })}
@@ -111,7 +111,7 @@ export function CapFilterBar({
         filter={wordFilter}
         clearable
         hidePickedOptions
-        nothingFoundMessage="No such brewery"
+        nothingFoundMessage="No such brand"
         w={isWide ? 240 : undefined}
       />
       {showRating && (
@@ -190,7 +190,7 @@ export function CapFilterBar({
             onClick={toggleMore}
             aria-expanded={moreOpen}
           >
-            {moreOpen ? "Fewer options" : "Brewery, sorting, grouping"}
+            {moreOpen ? "Fewer options" : "Brand, sorting, grouping"}
           </Button>
           {clear}
         </Group>

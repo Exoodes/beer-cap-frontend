@@ -1,0 +1,46 @@
+/* Admin lists: one row per entry that reflows on phones, no tables. */
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--mantine-radius-sm);
+  background: var(--surface);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.row + .row {
+  border-top: 1px solid var(--line);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+}
+
+.meta {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  flex: none;
+}
+
+/* Tabs scroll sideways on phones instead of wrapping. */
+.tabs {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs > * {
+  flex: none;
+}

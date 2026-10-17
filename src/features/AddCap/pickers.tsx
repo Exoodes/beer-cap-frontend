@@ -115,7 +115,7 @@ export function BrandPicker({
     <CreatablePicker
       {...props}
       label="Brand"
-      placeholder="Brewery or brand"
+      placeholder="The brand on the cap"
       items={brands}
       createLabel={(name) => (
         <Text size="sm" fw={600}>
