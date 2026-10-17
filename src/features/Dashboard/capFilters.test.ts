@@ -7,7 +7,9 @@ import {
   filterAndSortCaps,
   filtersFromParams,
   filtersToParams,
+  groupCaps,
   hasActiveFilters,
+  hasRatings,
   NO_COUNTRY,
 } from "./capFilters";
 
@@ -131,14 +133,24 @@ describe("sorting", () => {
 describe("facetOptions", () => {
   it("lists countries with counts in Czech order", () => {
     expect(facetOptions(CAPS, "country")).toEqual([
-      { value: "1", label: "Česká republika (5)" },
-      { value: "2", label: "Německo (1)" },
-      { value: NO_COUNTRY, label: "No country (1)" },
+      {
+        value: "1",
+        label: "Česká republika (5)",
+        name: "Česká republika",
+        count: 5,
+      },
+      { value: "2", label: "Německo (1)", name: "Německo", count: 1 },
+      {
+        value: NO_COUNTRY,
+        label: "No country (1)",
+        name: "No country",
+        count: 1,
+      },
     ]);
   });
 
   it("lists brands with counts", () => {
-    expect(facetOptions(CAPS, "brand")[0]).toEqual({
+    expect(facetOptions(CAPS, "brand")[0]).toMatchObject({
       value: "10",
       label: "Bernard (2)",
     });
@@ -153,6 +165,7 @@ describe("URL round trip", () => {
       brands: ["10"],
       rating: "7",
       sort: "brand",
+      group: "country",
     };
     expect(filtersFromParams(filtersToParams(filters))).toEqual(filters);
   });
@@ -160,12 +173,50 @@ describe("URL round trip", () => {
   it("omits defaults and ignores invalid values", () => {
     expect(filtersToParams(DEFAULT_FILTERS).toString()).toBe("");
     expect(
-      filtersFromParams(new URLSearchParams("sort=evil&rating=11")),
+      filtersFromParams(new URLSearchParams("sort=evil&rating=11&group=x")),
     ).toEqual(DEFAULT_FILTERS);
   });
 
   it("detects active filters but not sorting", () => {
     expect(hasActiveFilters({ ...DEFAULT_FILTERS, sort: "name" })).toBe(false);
     expect(hasActiveFilters({ ...DEFAULT_FILTERS, q: "x" })).toBe(true);
+  });
+});
+
+describe("groupCaps", () => {
+  const sorted = filterAndSortCaps(CAPS, DEFAULT_FILTERS);
+
+  it("keeps one section when not grouping", () => {
+    expect(groupCaps(sorted, "none")).toEqual([
+      { key: "all", title: "", caps: sorted },
+    ]);
+  });
+
+  it("groups by country in Czech order, no country last, order kept", () => {
+    const groups = groupCaps(sorted, "country");
+    expect(groups.map((g) => [g.title, ids(g.caps)])).toEqual([
+      ["Česká republika", [5, 4, 3, 2, 1]],
+      ["Německo", [6]],
+      ["No country", [7]],
+    ]);
+  });
+
+  it("groups by brewery", () => {
+    expect(groupCaps(sorted, "brand").map((g) => g.title)).toEqual([
+      "Bernard",
+      "Černá Hora",
+      "Paulaner",
+      "Staropramen",
+      "Svijany",
+    ]);
+  });
+});
+
+describe("hasRatings", () => {
+  it("is false until some beer is rated", () => {
+    expect(hasRatings(CAPS)).toBe(true);
+    expect(
+      hasRatings(CAPS.map((c) => ({ ...c, beer: { ...c.beer, rating: 0 } }))),
+    ).toBe(false);
   });
 });

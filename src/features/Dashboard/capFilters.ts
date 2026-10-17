@@ -23,6 +23,14 @@ export const RATING_OPTIONS = [
 
 export type RatingFilter = (typeof RATING_OPTIONS)[number]["value"] | null;
 
+export const GROUP_OPTIONS = [
+  { value: "none", label: "All" },
+  { value: "country", label: "Country" },
+  { value: "brand", label: "Brewery" },
+] as const;
+
+export type GroupKey = (typeof GROUP_OPTIONS)[number]["value"];
+
 /** Facet value for caps whose beer has no country. */
 export const NO_COUNTRY = "none";
 
@@ -32,6 +40,7 @@ export interface CapFilters {
   brands: string[];
   rating: RatingFilter;
   sort: SortKey;
+  group: GroupKey;
 }
 
 export const DEFAULT_FILTERS: CapFilters = {
@@ -40,6 +49,7 @@ export const DEFAULT_FILTERS: CapFilters = {
   brands: [],
   rating: null,
   sort: "recent",
+  group: "none",
 };
 
 const collator = new Intl.Collator("cs", {
@@ -116,7 +126,10 @@ export function filterAndSortCaps(
 
 export interface FacetOption {
   value: string;
+  /** "Německo (8)", for dropdowns. */
   label: string;
+  name: string;
+  count: number;
 }
 
 /** Country/brand options present in the collection, with cap counts. */
@@ -141,7 +154,46 @@ export function facetOptions(
     .map(([value, { name, count }]) => ({
       value,
       label: `${name} (${count})`,
+      name,
+      count,
     }));
+}
+
+/** Whether any beer has a rating; until then rating filters are hidden. */
+export function hasRatings(caps: BeerCap[]): boolean {
+  return caps.some((cap) => (cap.beer.rating ?? 0) > 0);
+}
+
+export interface CapGroup {
+  key: string;
+  /** Empty when not grouping. */
+  title: string;
+  caps: BeerCap[];
+}
+
+/**
+ * Splits the (already sorted) caps into sections by country or brewery,
+ * in alphabetical order with "No country" last. Order inside a section
+ * is kept.
+ */
+export function groupCaps(caps: BeerCap[], group: GroupKey): CapGroup[] {
+  if (group === "none") return [{ key: "all", title: "", caps }];
+
+  const groups = new Map<string, CapGroup>();
+  for (const cap of caps) {
+    const key = group === "country" ? countryKey(cap) : brandKey(cap);
+    const title =
+      group === "country"
+        ? (cap.beer.country?.name ?? "No country")
+        : (cap.beer.beer_brand?.name ?? "No brand");
+    const section = groups.get(key) ?? { key, title, caps: [] };
+    section.caps.push(cap);
+    groups.set(key, section);
+  }
+  const last = (key: string) => (key === NO_COUNTRY || key === "" ? 1 : 0);
+  return [...groups.values()].sort(
+    (a, b) => last(a.key) - last(b.key) || collator.compare(a.title, b.title),
+  );
 }
 
 export function hasActiveFilters(filters: CapFilters): boolean {
@@ -157,16 +209,20 @@ const isSortKey = (v: string | null): v is SortKey =>
   SORT_OPTIONS.some((o) => o.value === v);
 const isRating = (v: string | null): v is Exclude<RatingFilter, null> =>
   RATING_OPTIONS.some((o) => o.value === v);
+const isGroup = (v: string | null): v is GroupKey =>
+  GROUP_OPTIONS.some((o) => o.value === v);
 
 export function filtersFromParams(params: URLSearchParams): CapFilters {
   const sort = params.get("sort");
   const rating = params.get("rating");
+  const group = params.get("group");
   return {
     q: params.get("q") ?? "",
     countries: params.getAll("country"),
     brands: params.getAll("brand"),
     rating: isRating(rating) ? rating : null,
     sort: isSortKey(sort) ? sort : DEFAULT_FILTERS.sort,
+    group: isGroup(group) ? group : DEFAULT_FILTERS.group,
   };
 }
 
@@ -178,5 +234,8 @@ export function filtersToParams(filters: CapFilters): URLSearchParams {
   for (const b of filters.brands) params.append("brand", b);
   if (filters.rating) params.set("rating", filters.rating);
   if (filters.sort !== DEFAULT_FILTERS.sort) params.set("sort", filters.sort);
+  if (filters.group !== DEFAULT_FILTERS.group) {
+    params.set("group", filters.group);
+  }
   return params;
 }

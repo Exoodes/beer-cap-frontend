@@ -1,20 +1,26 @@
-// src/features/Dashboard/EditCapModal.tsx
-
 import {
   Button,
   Group,
   Modal,
-  NumberInput,
+  SimpleGrid,
   Stack,
   Text,
   TextInput,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
-import { useForm } from "@mantine/form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateBeer, updateCap } from "../../api/beerCaps";
-import type { BeerCap } from "../../types";
-import { notifySuccess } from "../../utils/notify";
+import { useMediaQuery } from "@mantine/hooks";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { getAllCaps, replaceCapImage, updateCap } from "../../api/beerCaps";
+import { getBeers } from "../../api/references";
+import { CapCircle } from "../../components/CapCircle";
+import type { Choice } from "../../components/CreatablePicker";
+import { ImageDropzone } from "../../components/ImageDropzone";
+import type { BeerCap, BeerCapUpdate } from "../../types";
+import { notifyError, notifySuccess } from "../../utils/notify";
+import { prepareImageForUpload } from "../../utils/prepareImage";
+import { groupCapsByBeer } from "../AddCap/matching";
+import { BeerPicker } from "../AddCap/pickers";
 
 interface EditCapModalProps {
   opened: boolean;
@@ -23,8 +29,15 @@ interface EditCapModalProps {
 }
 
 export function EditCapModal({ opened, close, cap }: EditCapModalProps) {
+  const isPhone = useMediaQuery("(max-width: 36em)");
   return (
-    <Modal opened={opened} onClose={close} title="Edit Cap Details" centered>
+    <Modal
+      opened={opened}
+      onClose={close}
+      title="Edit cap"
+      size="lg"
+      fullScreen={isPhone}
+    >
       {/* Mounted per opening, so the form always starts from the current cap. */}
       {opened && <EditCapForm cap={cap} close={close} />}
     </Modal>
@@ -33,79 +46,118 @@ export function EditCapModal({ opened, close, cap }: EditCapModalProps) {
 
 function EditCapForm({ cap, close }: { cap: BeerCap; close: () => void }) {
   const queryClient = useQueryClient();
-  const currentRating = cap.beer.rating ?? 0;
-
-  const form = useForm({
-    initialValues: {
-      variant_name: cap.variant_name ?? "",
-      rating: currentRating,
-      // Mantine 8 date inputs use "YYYY-MM-DD" strings, like the API.
-      collected_date: cap.collected_date ?? null,
-    },
-    validate: {
-      rating: (value) =>
-        value < 0 || value > 10 ? "Rating must be between 0-10" : null,
-    },
+  const { data: beers = [] } = useQuery({
+    queryKey: ["beers"],
+    queryFn: getBeers,
   });
+  const { data: caps = [] } = useQuery({
+    queryKey: ["beerCaps"],
+    queryFn: getAllCaps,
+  });
+  const capsByBeer = useMemo(() => groupCapsByBeer(caps), [caps]);
+
+  const [beer, setBeer] = useState<Choice>({ id: cap.beer.id });
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [preparing, setPreparing] = useState(false);
+  const [variant, setVariant] = useState(cap.variant_name ?? "");
+  // Mantine 8 date inputs use "YYYY-MM-DD" strings, like the API.
+  const [collected, setCollected] = useState<string | null>(
+    cap.collected_date ?? null,
+  );
 
   const mutation = useMutation({
-    mutationFn: async (values: typeof form.values) => {
-      if (values.rating !== currentRating) {
-        await updateBeer(cap.beer.id, { rating: values.rating });
-      }
+    mutationFn: async () => {
+      if (photo) await replaceCapImage(cap.id, photo);
       // Empty fields are sent as null so clearing them actually saves.
-      await updateCap(cap.id, {
-        variant_name: values.variant_name.trim() || null,
-        collected_date: values.collected_date || null,
-      });
+      const changes: BeerCapUpdate = {
+        variant_name: variant.trim() || null,
+        collected_date: collected || null,
+      };
+      if ("id" in beer && beer.id !== cap.beer.id) changes.beer_id = beer.id;
+      return updateCap(cap.id, changes);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["beerCap", cap.id] });
-      queryClient.invalidateQueries({ queryKey: ["beerCaps"] });
+      for (const key of [["beerCap", cap.id], ["beerCaps"], ["beers"]]) {
+        queryClient.invalidateQueries({ queryKey: key });
+      }
       notifySuccess("Cap updated.");
       close();
     },
   });
 
+  const pickPhoto = async (picked: File) => {
+    setPreparing(true);
+    try {
+      setPhoto(await prepareImageForUpload(picked));
+    } finally {
+      setPreparing(false);
+    }
+  };
+
   return (
-    <form onSubmit={form.onSubmit((values) => mutation.mutate(values))}>
-      <Stack>
-        <Text size="xs" c="dimmed">
-          Editing Cap #{cap.id} (Beer #{cap.beer.id})
+    <Stack gap="lg">
+      <BeerPicker
+        beers={beers}
+        capsByBeer={capsByBeer}
+        value={beer}
+        onChange={setBeer}
+        allowCreate={false}
+      />
+
+      <Stack gap="xs">
+        <Text size="sm" fw={500}>
+          Photo
         </Text>
-
-        <TextInput
-          label="Variant Name"
-          placeholder="e.g. Winter Edition"
-          {...form.getInputProps("variant_name")}
-        />
-
-        <NumberInput
-          label="Beer Rating (0-10)"
-          description="Updates rating for ALL caps of this beer"
-          min={0}
-          max={10}
-          {...form.getInputProps("rating")}
-        />
-
-        <DateInput
-          label="Collected Date"
-          placeholder="Pick date"
-          clearable
-          valueFormat="YYYY-MM-DD"
-          maxDate={new Date()}
-          {...form.getInputProps("collected_date")}
-        />
-
-        <Group justify="flex-end" mt="md">
-          <Button variant="default" onClick={close}>
-            Cancel
-          </Button>
-          <Button type="submit" loading={mutation.isPending}>
-            Save Changes
-          </Button>
+        <Group gap="md" wrap="nowrap" align="flex-start">
+          <CapCircle cap={cap} alt="Current photo" size={72} />
+          <Text size="sm" c="dimmed">
+            {photo
+              ? "The new photo below replaces this one when you save."
+              : "To replace this photo, add a new one below."}
+          </Text>
         </Group>
+        <ImageDropzone
+          image={photo}
+          onDrop={pickPhoto}
+          onClear={() => setPhoto(null)}
+          onReject={(message) =>
+            notifyError(new Error(message), "Photo not added")
+          }
+          busy={preparing}
+        />
       </Stack>
-    </form>
+
+      <SimpleGrid cols={{ base: 1, xs: 2 }}>
+        <TextInput
+          label="Variant"
+          description="Optional"
+          placeholder="e.g. Christmas edition, 2023 design"
+          value={variant}
+          onChange={(event) => setVariant(event.currentTarget.value)}
+        />
+        <DateInput
+          label="Collected"
+          description="When you got it"
+          valueFormat="D. M. YYYY"
+          clearable
+          maxDate={new Date()}
+          value={collected}
+          onChange={setCollected}
+        />
+      </SimpleGrid>
+
+      <Group justify="flex-end">
+        <Button variant="default" onClick={close}>
+          Cancel
+        </Button>
+        <Button
+          loading={mutation.isPending}
+          disabled={preparing}
+          onClick={() => mutation.mutate()}
+        >
+          Save changes
+        </Button>
+      </Group>
+    </Stack>
   );
 }

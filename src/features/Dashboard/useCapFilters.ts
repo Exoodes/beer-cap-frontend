@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import {
   type CapFilters,
   filtersFromParams,
   filtersToParams,
 } from "./capFilters";
+import { rememberCollectionSearch } from "./capNavigation";
 
 const fromSearch = (search: string) =>
   filtersFromParams(new URLSearchParams(search));
@@ -46,6 +47,12 @@ export function useCapFilters() {
       query ? `?${query}` : location.pathname,
     );
   };
+
+  // A cap's "Back" link returns to the collection with these filters.
+  const search = filtersToParams(filters).toString();
+  useEffect(() => {
+    rememberCollectionSearch(search ? `?${search}` : "");
+  }, [search]);
 
   return [filters, setFilters] as const;
 }

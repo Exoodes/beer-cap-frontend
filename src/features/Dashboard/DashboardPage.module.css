@@ -1,0 +1,6 @@
+/* A section of the tray: "Česká Republika  72 caps", over a thin rule. */
+.sectionHead {
+  margin-bottom: 1rem;
+  padding-bottom: 0.375rem;
+  border-bottom: 1px solid var(--line);
+}

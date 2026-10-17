@@ -5,8 +5,10 @@ import classes from "./CapCircle.module.css";
 
 type CapCircleProps = {
   alt: string;
-  /** Diameter in px. */
-  size: number;
+  /** Diameter in px; without it the circle fills its container's width. */
+  size?: number;
+  /** Load the full photo rather than the thumbnail (large views). */
+  full?: boolean;
   /** Amber ring, e.g. for the photo being added. */
   highlighted?: boolean;
 } & (
@@ -22,11 +24,14 @@ type CapCircleProps = {
 export function CapCircle({
   alt,
   size,
+  full,
   highlighted,
   cap,
   file,
 }: CapCircleProps) {
-  const style = { width: size, height: size };
+  const style = size
+    ? { width: size, height: size }
+    : { width: "100%", aspectRatio: "1" };
   const className = highlighted
     ? `${classes.circle} ${classes.highlighted}`
     : classes.circle;
@@ -36,7 +41,7 @@ export function CapCircle({
       {file ? (
         <FileImage file={file} alt={alt} />
       ) : (
-        <CapImage key={cap.presigned_url} cap={cap} alt={alt} />
+        <CapImage key={cap.presigned_url} cap={cap} alt={alt} full={full} />
       )}
     </span>
   );
@@ -45,11 +50,15 @@ export function CapCircle({
 function CapImage({
   cap,
   alt,
+  full,
 }: {
   cap: Pick<BeerCap, "thumbnail_url" | "presigned_url">;
   alt: string;
+  full?: boolean;
 }) {
-  const sources = [cap.thumbnail_url, cap.presigned_url]
+  const sources = (
+    full ? [cap.presigned_url] : [cap.thumbnail_url, cap.presigned_url]
+  )
     .filter((url): url is string => !!url)
     .map(getImageUrl);
   const [failed, setFailed] = useState(0);
