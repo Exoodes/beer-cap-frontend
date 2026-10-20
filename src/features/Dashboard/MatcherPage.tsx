@@ -13,12 +13,14 @@ import {
 import { IconSearch, IconX } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { findSimilarCaps } from "../../api/matcher";
 import { CapGrid, CapTile } from "../../components/CapTile";
 import { ImageDropzone } from "../../components/ImageDropzone";
 import type { BeerCapWithQueryResult } from "../../types";
 
 export function MatcherPage() {
+  const { t } = useTranslation();
   const [file, setFile] = useState<File | null>(null);
   const [results, setResults] = useState<BeerCapWithQueryResult[]>([]);
 
@@ -44,10 +46,8 @@ export function MatcherPage() {
     <Container size="xl" py="xl">
       <Stack gap="xl">
         <Box>
-          <Title order={2}>Matcher</Title>
-          <Text c="dimmed">
-            Upload a photo of a beer cap to find matches in your collection.
-          </Text>
+          <Title order={2}>{t("matcher.title")}</Title>
+          <Text c="dimmed">{t("matcher.intro")}</Text>
         </Box>
 
         <Paper withBorder p="md" radius="md" pos="relative">
@@ -69,7 +69,7 @@ export function MatcherPage() {
                   leftSection={<IconX size={16} />}
                   onClick={handleClear}
                 >
-                  Clear
+                  {t("common.clear")}
                 </Button>
               )}
               <Button
@@ -78,7 +78,7 @@ export function MatcherPage() {
                 leftSection={<IconSearch size={16} />}
                 onClick={handleSearch}
               >
-                Find Matches
+                {t("matcher.find")}
               </Button>
             </Group>
           </Stack>
@@ -87,7 +87,7 @@ export function MatcherPage() {
         {results.length > 0 && (
           <Box>
             <Title order={3} mb="lg">
-              Similarity Results
+              {t("matcher.results")}
             </Title>
             <CapGrid>
               {results.map((result) => (
@@ -98,12 +98,15 @@ export function MatcherPage() {
                   cap={{
                     ...result,
                     thumbnail_url: null,
-                    beer: { name: `Cap ${result.id}` },
+                    beer: { name: t("matcher.capNumber", { id: result.id }) },
                   }}
                   caption={
                     <Text size="xs" c="dimmed">
-                      {(result.query_result.mean_similarity * 100).toFixed(0)}%
-                      match
+                      {t("matcher.match", {
+                        percent: (
+                          result.query_result.mean_similarity * 100
+                        ).toFixed(0),
+                      })}
                     </Text>
                   }
                 />

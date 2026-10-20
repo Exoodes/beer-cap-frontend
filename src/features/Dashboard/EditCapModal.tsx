@@ -11,6 +11,7 @@ import { DateInput } from "@mantine/dates";
 import { useMediaQuery } from "@mantine/hooks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { getAllCaps, replaceCapImage, updateCap } from "../../api/beerCaps";
 import { getBeers } from "../../api/references";
 import { CapCircle } from "../../components/CapCircle";
@@ -29,12 +30,13 @@ interface EditCapModalProps {
 }
 
 export function EditCapModal({ opened, close, cap }: EditCapModalProps) {
+  const { t } = useTranslation();
   const isPhone = useMediaQuery("(max-width: 36em)");
   return (
     <Modal
       opened={opened}
       onClose={close}
-      title="Edit cap"
+      title={t("editCap.title")}
       size="lg"
       fullScreen={isPhone}
     >
@@ -45,6 +47,7 @@ export function EditCapModal({ opened, close, cap }: EditCapModalProps) {
 }
 
 function EditCapForm({ cap, close }: { cap: BeerCap; close: () => void }) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { data: beers = [] } = useQuery({
     queryKey: ["beers"],
@@ -80,7 +83,7 @@ function EditCapForm({ cap, close }: { cap: BeerCap; close: () => void }) {
       for (const key of [["beerCap", cap.id], ["beerCaps"], ["beers"]]) {
         queryClient.invalidateQueries({ queryKey: key });
       }
-      notifySuccess("Cap updated.");
+      notifySuccess(t("editCap.updated"));
       close();
     },
   });
@@ -106,14 +109,12 @@ function EditCapForm({ cap, close }: { cap: BeerCap; close: () => void }) {
 
       <Stack gap="xs">
         <Text size="sm" fw={500}>
-          Photo
+          {t("editCap.photo")}
         </Text>
         <Group gap="md" wrap="nowrap" align="flex-start">
-          <CapCircle cap={cap} alt="Current photo" size={72} />
+          <CapCircle cap={cap} alt={t("editCap.currentPhoto")} size={72} />
           <Text size="sm" c="dimmed">
-            {photo
-              ? "The new photo below replaces this one when you save."
-              : "To replace this photo, add a new one below."}
+            {photo ? t("editCap.willReplace") : t("editCap.toReplace")}
           </Text>
         </Group>
         <ImageDropzone
@@ -121,7 +122,7 @@ function EditCapForm({ cap, close }: { cap: BeerCap; close: () => void }) {
           onDrop={pickPhoto}
           onClear={() => setPhoto(null)}
           onReject={(message) =>
-            notifyError(new Error(message), "Photo not added")
+            notifyError(new Error(message), t("photo.notAdded"))
           }
           busy={preparing}
         />
@@ -129,15 +130,15 @@ function EditCapForm({ cap, close }: { cap: BeerCap; close: () => void }) {
 
       <SimpleGrid cols={{ base: 1, xs: 2 }}>
         <TextInput
-          label="Variant"
-          description="Optional"
-          placeholder="e.g. Christmas edition, 2023 design"
+          label={t("capForm.variant")}
+          description={t("common.optional")}
+          placeholder={t("capForm.variantPlaceholder")}
           value={variant}
           onChange={(event) => setVariant(event.currentTarget.value)}
         />
         <DateInput
-          label="Collected"
-          description="When you got it"
+          label={t("capForm.collected")}
+          description={t("capForm.collectedHint")}
           valueFormat="D. M. YYYY"
           clearable
           maxDate={new Date()}
@@ -148,14 +149,14 @@ function EditCapForm({ cap, close }: { cap: BeerCap; close: () => void }) {
 
       <Group justify="flex-end">
         <Button variant="default" onClick={close}>
-          Cancel
+          {t("common.cancel")}
         </Button>
         <Button
           loading={mutation.isPending}
           disabled={preparing}
           onClick={() => mutation.mutate()}
         >
-          Save changes
+          {t("common.saveChanges")}
         </Button>
       </Group>
     </Stack>

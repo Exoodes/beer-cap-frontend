@@ -1,10 +1,11 @@
 import { notifications } from "@mantine/notifications";
 import { getErrorMessage } from "../api/client";
+import i18n from "../i18n";
 
-export function notifyError(error: unknown, title = "Something went wrong") {
+export function notifyError(error: unknown, title?: string) {
   notifications.show({
     color: "red",
-    title,
+    title: title ?? i18n.t("errors.generic"),
     message: getErrorMessage(error),
     autoClose: 8000,
   });

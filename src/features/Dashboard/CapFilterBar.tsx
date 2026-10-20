@@ -21,6 +21,7 @@ import {
   IconPlus,
   IconSearch,
 } from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { pluralCaps } from "../../utils/format";
 import { wordFilter } from "../../utils/search";
@@ -28,26 +29,36 @@ import classes from "./CapFilterBar.module.css";
 import {
   type CapFilters,
   type FacetOption,
+  GROUP_KEYS,
   type GroupKey,
-  RATING_OPTIONS,
+  RATING_FILTERS,
   type RatingFilter,
-  SORT_OPTIONS,
+  SORT_KEYS,
   type SortKey,
 } from "./capFilters";
 
 type Change = (changes: Partial<CapFilters>) => void;
 
-const GROUP_LABELS = [
-  { value: "none", label: "None" },
-  { value: "country", label: "By country" },
-  { value: "brand", label: "By brand" },
-] as const;
-
-const ANY_RATING = [{ value: "any", label: "Any" }, ...RATING_OPTIONS] as const;
-
-/** Rating filter and sort only make sense once beers are rated. */
-const sortOptions = (showRating: boolean) =>
-  SORT_OPTIONS.filter((option) => showRating || option.value !== "rating");
+/** The options of each filter, labelled in the UI's language. */
+function useFilterOptions() {
+  const { t } = useTranslation();
+  return {
+    /** Rating filter and sort only make sense once beers are rated. */
+    sort: (showRating: boolean) =>
+      SORT_KEYS.filter((key) => showRating || key !== "rating").map((key) => ({
+        value: key,
+        label: t(`filters.sortBy.${key}`),
+      })),
+    group: GROUP_KEYS.map((key) => ({
+      value: key,
+      label: t(`filters.groupBy.${key}`),
+    })),
+    rating: RATING_FILTERS.map((key) => ({
+      value: key,
+      label: key === "unrated" ? t("filters.unrated") : `${key}+`,
+    })),
+  };
+}
 
 interface SearchProps {
   value: string;
@@ -57,10 +68,11 @@ interface SearchProps {
 
 /** The search box: in the header on wide screens, the bottom bar on phones. */
 export function CapSearch({ value, onChange, placeholder }: SearchProps) {
+  const { t } = useTranslation();
   return (
     <TextInput
       type="search"
-      aria-label="Search"
+      aria-label={t("filters.searchLabel")}
       placeholder={placeholder}
       size="lg"
       radius="xl"
@@ -70,7 +82,7 @@ export function CapSearch({ value, onChange, placeholder }: SearchProps) {
       rightSection={
         value ? (
           <CloseButton
-            aria-label="Clear search"
+            aria-label={t("filters.clearSearch")}
             onClick={() => onChange({ q: "" })}
           />
         ) : null
@@ -94,6 +106,7 @@ export function CountryChips({
   total,
   onChange,
 }: CountryChipsProps) {
+  const { t } = useTranslation();
   const toggle = (country: string) =>
     onChange({
       countries: value.includes(country)
@@ -102,14 +115,18 @@ export function CountryChips({
     });
   return (
     // biome-ignore lint/a11y/useSemanticElements: a fieldset can't scroll sideways as a flex row
-    <div role="group" aria-label="Country" className={classes.chips}>
+    <div
+      role="group"
+      aria-label={t("filters.country")}
+      className={classes.chips}
+    >
       <button
         type="button"
         className={classes.chip}
         aria-pressed={value.length === 0}
         onClick={() => onChange({ countries: [] })}
       >
-        All <span className={classes.count}>{total}</span>
+        {t("filters.all")} <span className={classes.count}>{total}</span>
       </button>
       {options.map((option) => (
         <button
@@ -176,17 +193,26 @@ interface FilterProps {
   onChange: Change;
 }
 
-function brandSummary(brands: string[], options: FacetOption[]): string {
-  if (brands.length === 0) return "Any";
-  const first = options.find((o) => o.value === brands[0])?.name ?? "1 brand";
+function BrandSummary({
+  brands,
+  options,
+}: {
+  brands: string[];
+  options: FacetOption[];
+}) {
+  const { t } = useTranslation();
+  if (brands.length === 0) return t("filters.any");
+  const first =
+    options.find((o) => o.value === brands[0])?.name ?? t("filters.oneBrand");
   return brands.length === 1 ? first : `${first} +${brands.length - 1}`;
 }
 
 function BrandSelect({ filters, brandOptions, onChange }: FilterProps) {
+  const { t } = useTranslation();
   return (
     <MultiSelect
-      label="Brand"
-      placeholder={filters.brands.length ? undefined : "Any brand"}
+      label={t("filters.brand")}
+      placeholder={filters.brands.length ? undefined : t("filters.anyBrand")}
       data={brandOptions}
       value={filters.brands}
       onChange={(brands) => onChange({ brands })}
@@ -194,7 +220,7 @@ function BrandSelect({ filters, brandOptions, onChange }: FilterProps) {
       filter={wordFilter}
       clearable
       hidePickedOptions
-      nothingFoundMessage="No such brand"
+      nothingFoundMessage={t("filters.noSuchBrand")}
       comboboxProps={{ withinPortal: false }}
     />
   );
@@ -203,25 +229,30 @@ function BrandSelect({ filters, brandOptions, onChange }: FilterProps) {
 /** Wide screens: brand, rating, sort and grouping as quiet menus. */
 export function FilterMenus(props: FilterProps) {
   const { filters, brandOptions, showRating, onChange } = props;
+  const { t } = useTranslation();
+  const options = useFilterOptions();
   return (
     <div className={classes.menus}>
       <QuietMenu
-        label="Sort"
+        label={t("filters.sort")}
         value={filters.sort}
-        options={sortOptions(showRating)}
+        options={options.sort(showRating)}
         onChange={(sort: SortKey) => onChange({ sort })}
       />
       <QuietMenu
-        label="Group"
+        label={t("filters.group")}
         value={filters.group}
-        options={GROUP_LABELS}
+        options={options.group}
         onChange={(group: GroupKey) => onChange({ group })}
       />
       {showRating && (
-        <QuietMenu
-          label="Rating"
+        <QuietMenu<string>
+          label={t("filters.rating")}
           value={filters.rating ?? "any"}
-          options={ANY_RATING}
+          options={[
+            { value: "any", label: t("filters.any") },
+            ...options.rating,
+          ]}
           onChange={(rating) =>
             onChange({
               rating: rating === "any" ? null : (rating as RatingFilter),
@@ -232,8 +263,8 @@ export function FilterMenus(props: FilterProps) {
       <Popover position="bottom-end" width={300} trapFocus>
         <Popover.Target>
           <UnstyledButton className={classes.quiet}>
-            <span className={classes.quietLabel}>Brand</span>
-            {brandSummary(filters.brands, brandOptions)}
+            <span className={classes.quietLabel}>{t("filters.brand")}</span>
+            <BrandSummary brands={filters.brands} options={brandOptions} />
             <IconChevronDown size={14} stroke={2.5} />
           </UnstyledButton>
         </Popover.Target>
@@ -255,6 +286,8 @@ export function PhoneFilterBar({
   ...props
 }: FilterProps & { isAdmin: boolean; shown: number }) {
   const { filters, showRating, onChange } = props;
+  const { t } = useTranslation();
+  const options = useFilterOptions();
   const [opened, { open, close }] = useDisclosure(false);
   const narrowed = filters.brands.length > 0 || filters.rating !== null;
 
@@ -263,14 +296,14 @@ export function PhoneFilterBar({
       <CapSearch
         value={filters.q}
         onChange={onChange}
-        placeholder="Find a cap"
+        placeholder={t("collection.searchPlaceholderShort")}
       />
       <Indicator disabled={!narrowed} size={10} offset={6}>
         <ActionIcon
           variant="default"
           size={52}
           radius="xl"
-          aria-label="Brand, sorting and grouping"
+          aria-label={t("filters.more")}
           onClick={open}
         >
           <IconAdjustmentsHorizontal size={22} />
@@ -282,7 +315,7 @@ export function PhoneFilterBar({
           to="/add"
           size={52}
           radius="xl"
-          aria-label="Add a cap"
+          aria-label={t("filters.addCap")}
           className={classes.add}
         >
           <IconPlus size={24} stroke={2.5} />
@@ -294,15 +327,15 @@ export function PhoneFilterBar({
         onClose={close}
         position="bottom"
         classNames={{ content: classes.sheet }}
-        title={<span className="display">Brand, sorting, grouping</span>}
+        title={<span className="display">{t("filters.moreTitle")}</span>}
       >
         <Stack gap="md" pb="md">
           <BrandSelect {...props} />
           {showRating && (
             <Select
-              label="Rating"
-              placeholder="Any rating"
-              data={RATING_OPTIONS}
+              label={t("filters.rating")}
+              placeholder={t("filters.anyRating")}
+              data={options.rating}
               value={filters.rating}
               onChange={(rating) =>
                 onChange({ rating: rating as RatingFilter })
@@ -312,24 +345,24 @@ export function PhoneFilterBar({
             />
           )}
           <Select
-            label="Sort"
-            data={sortOptions(showRating)}
+            label={t("filters.sort")}
+            data={options.sort(showRating)}
             value={filters.sort}
             onChange={(sort) => sort && onChange({ sort: sort as SortKey })}
             allowDeselect={false}
             comboboxProps={{ withinPortal: false }}
           />
           <Stack gap={4}>
-            <span className={classes.fieldLabel}>Group</span>
+            <span className={classes.fieldLabel}>{t("filters.group")}</span>
             <SegmentedControl
               fullWidth
-              data={GROUP_LABELS.map((option) => ({ ...option }))}
+              data={options.group}
               value={filters.group}
               onChange={(group) => onChange({ group: group as GroupKey })}
             />
           </Stack>
           <Button size="md" onClick={close}>
-            Show {pluralCaps(shown)}
+            {t("filters.show", { caps: pluralCaps(shown) })}
           </Button>
         </Stack>
       </Drawer>

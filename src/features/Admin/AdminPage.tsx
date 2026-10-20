@@ -7,6 +7,7 @@ import {
   IconWorld,
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import {
   createBrand,
@@ -31,6 +32,7 @@ const TABS = ["beers", "brands", "countries", "backups", "pipeline"] as const;
 type Tab = (typeof TABS)[number];
 
 export function AdminPage() {
+  const { t } = useTranslation();
   const matchingEnabled = useMatchingEnabled();
   // The open tab is in the URL, so refresh and back keep it.
   const [params, setParams] = useSearchParams();
@@ -44,27 +46,27 @@ export function AdminPage() {
   return (
     <>
       <Title order={1} mb="lg">
-        Admin
+        {t("admin.title")}
       </Title>
 
       {/* Panels mount when opened, so e.g. backups load only when needed. */}
       <Tabs value={tab} onChange={openTab} keepMounted={false}>
         <Tabs.List className={classes.tabs} mb="lg">
           <Tabs.Tab value="beers" leftSection={<IconBeer size={16} />}>
-            Beers
+            {t("admin.tabs.beers")}
           </Tabs.Tab>
           <Tabs.Tab value="brands" leftSection={<IconCertificate size={16} />}>
-            Brands
+            {t("admin.tabs.brands")}
           </Tabs.Tab>
           <Tabs.Tab value="countries" leftSection={<IconWorld size={16} />}>
-            Countries
+            {t("admin.tabs.countries")}
           </Tabs.Tab>
           <Tabs.Tab value="backups" leftSection={<IconArchive size={16} />}>
-            Backups
+            {t("admin.tabs.backups")}
           </Tabs.Tab>
           {matchingEnabled && (
             <Tabs.Tab value="pipeline" leftSection={<IconRobot size={16} />}>
-              AI pipeline
+              {t("admin.tabs.pipeline")}
             </Tabs.Tab>
           )}
         </Tabs.List>
@@ -98,7 +100,7 @@ function BrandsTab() {
   });
   return (
     <EntriesTab
-      noun="brand"
+      kind="brand"
       entries={brands}
       invalidates={["brands", "beers", "beerCaps", "beerCap"]}
       create={(name) => createBrand(name)}
@@ -126,7 +128,7 @@ function CountriesTab() {
   });
   return (
     <EntriesTab
-      noun="country"
+      kind="country"
       entries={countries}
       invalidates={["countries", "beers", "beerCaps", "beerCap"]}
       create={(name, description) => createCountry({ name, description })}

@@ -16,6 +16,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.tsx";
 import { AdminProvider } from "./admin/AdminProvider";
+import { LocalizedDates } from "./i18n/LocalizedDates";
 import { cssVariablesResolver, theme } from "./theme";
 import { notifyError } from "./utils/notify";
 
@@ -40,9 +41,11 @@ ReactDOM.createRoot(root).render(
       <Notifications position="top-right" />
       <QueryClientProvider client={queryClient}>
         <AdminProvider>
-          <ModalsProvider>
-            <App />
-          </ModalsProvider>
+          <LocalizedDates>
+            <ModalsProvider>
+              <App />
+            </ModalsProvider>
+          </LocalizedDates>
         </AdminProvider>
       </QueryClientProvider>
     </MantineProvider>

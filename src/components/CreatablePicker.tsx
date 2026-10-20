@@ -1,5 +1,6 @@
 import { Badge, Combobox, InputBase, useCombobox } from "@mantine/core";
 import { type ReactNode, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { cleanName } from "../utils/names";
 import { matchesWords, normalize } from "../utils/search";
 
@@ -48,6 +49,7 @@ export function CreatablePicker<T extends PickerItem>({
   createWhenExact = false,
   allowCreate = true,
 }: CreatablePickerProps<T>) {
+  const { t } = useTranslation();
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),
   });
@@ -109,7 +111,7 @@ export function CreatablePicker<T extends PickerItem>({
           rightSection={
             isNew && !typing ? (
               <Badge variant="light" size="sm">
-                New
+                {t("common.new")}
               </Badge>
             ) : (
               <Combobox.Chevron />
@@ -134,7 +136,7 @@ export function CreatablePicker<T extends PickerItem>({
           )}
           {!matches.length && !canCreate && (
             <Combobox.Empty>
-              {allowCreate ? "Type a name to add it" : "Nothing found"}
+              {allowCreate ? t("picker.typeToAdd") : t("picker.nothingFound")}
             </Combobox.Empty>
           )}
         </Combobox.Options>

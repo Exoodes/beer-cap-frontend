@@ -1,5 +1,6 @@
 import { Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
+import i18n from "../i18n";
 
 interface ConfirmDeleteOptions {
   /** A question naming the thing: "Delete Bernard 12°?" */
@@ -18,7 +19,10 @@ export function confirmDelete({
   modals.openConfirmModal({
     title,
     children: <Text size="sm">{message}</Text>,
-    labels: { confirm: "Delete", cancel: "Cancel" },
+    labels: {
+      confirm: i18n.t("common.delete"),
+      cancel: i18n.t("common.cancel"),
+    },
     confirmProps: { color: "red" },
     onConfirm,
   });

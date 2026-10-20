@@ -1,5 +1,6 @@
 import axios, { isAxiosError } from "axios";
 import { readAdminToken } from "../admin/token";
+import i18n from "../i18n";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
@@ -26,10 +27,10 @@ export function getErrorMessage(error: unknown): string {
     return error instanceof Error ? error.message : String(error);
   }
   if (!error.response) {
-    return "Cannot reach the server. Check your connection and try again.";
+    return i18n.t("errors.offline");
   }
   if (error.response.status === 401) {
-    return "Not authorized. Log in as admin again.";
+    return i18n.t("errors.unauthorized");
   }
   const detail = (error.response.data as { detail?: unknown } | undefined)
     ?.detail;
@@ -42,5 +43,5 @@ export function getErrorMessage(error: unknown): string {
       })
       .join("; ");
   }
-  return `Request failed (${error.response.status}).`;
+  return i18n.t("errors.requestFailed", { status: error.response.status });
 }
