@@ -1,6 +1,7 @@
 import { Button, Group, Modal, Stack, Text } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { Choice } from "../../components/CreatablePicker";
 import { notifySuccess } from "../../utils/notify";
 
@@ -15,8 +16,8 @@ interface MergeModalProps {
     value: Choice | null,
     onChange: (choice: Choice) => void,
   ) => ReactNode;
-  /** "beer", "brand" or "country". */
-  noun: string;
+  /** "Merge Bernard into another beer". */
+  title: string;
   nameOf: (id: number) => string;
   merge: (id: number, intoId: number) => Promise<void>;
 }
@@ -25,15 +26,11 @@ interface MergeModalProps {
 export function MergeModal({
   source,
   onClose,
-  noun,
+  title,
   ...props
 }: MergeModalProps) {
   return (
-    <Modal
-      opened={source !== null}
-      onClose={onClose}
-      title={source ? `Merge ${source.name} into another ${noun}` : ""}
-    >
+    <Modal opened={source !== null} onClose={onClose} title={title}>
       {/* Mounted per opening, so the choice starts empty. */}
       {source && <MergeForm source={source} onClose={onClose} {...props} />}
     </Modal>
@@ -47,9 +44,10 @@ function MergeForm({
   renderPicker,
   nameOf,
   merge,
-}: Omit<MergeModalProps, "source" | "noun"> & {
+}: Omit<MergeModalProps, "source" | "title"> & {
   source: { id: number; name: string };
 }) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [target, setTarget] = useState<Choice | null>(null);
   const targetId = target && "id" in target ? target.id : null;
@@ -60,7 +58,9 @@ function MergeForm({
       for (const key of ["beers", "brands", "countries", "beerCaps"]) {
         queryClient.invalidateQueries({ queryKey: [key] });
       }
-      notifySuccess(`Merged ${source.name} into ${nameOf(intoId)}.`);
+      notifySuccess(
+        t("admin.merged", { source: source.name, target: nameOf(intoId) }),
+      );
       onClose();
     },
   });
@@ -71,14 +71,16 @@ function MergeForm({
       {renderPicker(target, setTarget)}
       <Group justify="flex-end">
         <Button variant="default" onClick={onClose}>
-          Cancel
+          {t("common.cancel")}
         </Button>
         <Button
           disabled={targetId === null}
           loading={mutation.isPending}
           onClick={() => targetId !== null && mutation.mutate(targetId)}
         >
-          {targetId === null ? "Merge" : `Merge into ${nameOf(targetId)}`}
+          {targetId === null
+            ? t("admin.merge")
+            : t("admin.mergeInto", { name: nameOf(targetId) })}
         </Button>
       </Group>
     </Stack>

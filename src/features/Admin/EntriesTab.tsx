@@ -8,6 +8,7 @@ import {
 } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { Choice } from "../../components/CreatablePicker";
 import { confirmDelete } from "../../utils/confirm";
 import { cleanName } from "../../utils/names";
@@ -24,8 +25,8 @@ export interface Entry {
 }
 
 interface EntriesTabProps<T extends Entry> {
-  /** "brand" or "country", for the wording. */
-  noun: string;
+  /** Picks the wording. */
+  kind: "brand" | "country";
   entries: T[];
   /** Query keys to refresh after a change. */
   invalidates: string[];
@@ -42,12 +43,9 @@ interface EntriesTabProps<T extends Entry> {
   ) => ReactNode;
 }
 
-const beersText = (count: number) =>
-  count === 1 ? "1 beer" : `${count} beers`;
-
 /** Brands or countries: add, rename, merge duplicates, delete unused ones. */
 export function EntriesTab<T extends Entry>({
-  noun,
+  kind,
   entries,
   invalidates,
   create,
@@ -57,6 +55,7 @@ export function EntriesTab<T extends Entry>({
   renderEdit,
   renderPicker,
 }: EntriesTabProps<T>) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const refresh = () => {
     for (const key of invalidates) {
@@ -80,7 +79,7 @@ export function EntriesTab<T extends Entry>({
     mutationFn: () => create(cleanName(newName), newDescription.trim() || null),
     onSuccess: () => {
       refresh();
-      notifySuccess(`Added ${cleanName(newName)}.`);
+      notifySuccess(t("admin.added", { name: cleanName(newName) }));
       setNewName("");
       setNewDescription("");
     },
@@ -90,7 +89,7 @@ export function EntriesTab<T extends Entry>({
     mutationFn: remove,
     onSuccess: () => {
       refresh();
-      notifySuccess(`The ${noun} was deleted.`);
+      notifySuccess(t(`admin.${kind}.deleted`));
     },
   });
 
@@ -106,15 +105,15 @@ export function EntriesTab<T extends Entry>({
       >
         <Group align="flex-end" gap="sm">
           <TextInput
-            label={`New ${noun}`}
-            placeholder="Name"
+            label={t(`admin.${kind}.new`)}
+            placeholder={t("common.name")}
             value={newName}
             onChange={(event) => setNewName(event.currentTarget.value)}
             style={{ flex: "1 1 200px" }}
           />
           {withDescription && (
             <TextInput
-              label="Description (optional)"
+              label={t("admin.descriptionOptional")}
               value={newDescription}
               onChange={(event) => setNewDescription(event.currentTarget.value)}
               style={{ flex: "2 1 240px" }}
@@ -127,15 +126,15 @@ export function EntriesTab<T extends Entry>({
             loading={createMutation.isPending}
             disabled={!cleanName(newName)}
           >
-            Add {noun}
+            {t(`admin.${kind}.add`)}
           </Button>
         </Group>
       </form>
 
       {entries.length > 12 && (
         <TextInput
-          aria-label={`Search ${noun} names`}
-          placeholder="Search"
+          aria-label={t(`admin.${kind}.searchLabel`)}
+          placeholder={t("common.search")}
           leftSection={<IconSearch size={16} />}
           value={search}
           onChange={(event) => setSearch(event.currentTarget.value)}
@@ -145,7 +144,7 @@ export function EntriesTab<T extends Entry>({
 
       {shown.length === 0 ? (
         <Text c="dimmed">
-          {entries.length ? `Nothing matches “${search}”.` : "None yet."}
+          {entries.length ? t("admin.noMatch", { search }) : t("admin.none")}
         </Text>
       ) : (
         <AdminList>
@@ -156,36 +155,36 @@ export function EntriesTab<T extends Entry>({
                 key={entry.id}
                 title={entry.name}
                 details={entry.description}
-                meta={beersText(count)}
+                meta={t("common.beers", { count })}
                 actions={[
                   {
-                    label: `Edit ${entry.name}`,
-                    short: "Edit",
+                    label: t("admin.editNamed", { name: entry.name }),
+                    short: t("common.edit"),
                     icon: <IconPencil size={18} />,
                     onClick: () => setEditing(entry),
                   },
                   {
-                    label: `Merge ${entry.name} into another ${noun}`,
-                    short: `Merge into another ${noun}`,
+                    label: t(`admin.${kind}.mergeLabel`, { name: entry.name }),
+                    short: t(`admin.${kind}.mergeShort`),
                     icon: <IconArrowMerge size={18} />,
                     onClick: () => setMerging(entry),
                   },
                   {
-                    label: `Delete ${entry.name}`,
-                    short: "Delete",
+                    label: t("admin.deleteNamed", { name: entry.name }),
+                    short: t("common.delete"),
                     icon: <IconTrash size={18} />,
                     danger: true,
                     disabledReason:
                       count > 0
-                        ? `Used by ${beersText(count)}. Merge it into another ${noun} instead.`
+                        ? t(`admin.${kind}.usedBy`, { count })
                         : undefined,
                     loading:
                       deleteMutation.isPending &&
                       deleteMutation.variables === entry.id,
                     onClick: () =>
                       confirmDelete({
-                        title: `Delete ${entry.name}?`,
-                        message: "This can't be undone.",
+                        title: t("admin.deleteQuestion", { name: entry.name }),
+                        message: t("common.cantUndo"),
                         onConfirm: () => deleteMutation.mutate(entry.id),
                       }),
                   },
@@ -199,7 +198,7 @@ export function EntriesTab<T extends Entry>({
       <Modal
         opened={editing !== null}
         onClose={() => setEditing(null)}
-        title={editing ? `Edit ${editing.name}` : ""}
+        title={editing ? t("admin.editNamed", { name: editing.name }) : ""}
       >
         {editing && renderEdit(editing, () => setEditing(null))}
       </Modal>
@@ -207,17 +206,15 @@ export function EntriesTab<T extends Entry>({
       <MergeModal
         source={merging}
         onClose={() => setMerging(null)}
+        title={
+          merging ? t(`admin.${kind}.mergeLabel`, { name: merging.name }) : ""
+        }
         explanation={
           merging &&
-          `Use this for a duplicate. ${
-            (merging.beer_count ?? 0) === 1
-              ? "Its beer moves"
-              : `Its ${beersText(merging.beer_count ?? 0)} move`
-          } to the ${noun} you pick, then ${merging.name} is deleted.${
-            noun === "brand"
-              ? " A beer the other brand already has is joined with it, so their caps end up together."
-              : ""
-          }`
+          t(`admin.${kind}.mergeExplanation`, {
+            count: merging.beer_count ?? 0,
+            name: merging.name,
+          })
         }
         renderPicker={(value, onChange) =>
           renderPicker(
@@ -226,7 +223,6 @@ export function EntriesTab<T extends Entry>({
             onChange,
           )
         }
-        noun={noun}
         nameOf={nameOf}
         merge={merge}
       />

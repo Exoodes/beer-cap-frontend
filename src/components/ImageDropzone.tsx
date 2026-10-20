@@ -19,6 +19,7 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { formatFileSize } from "../utils/prepareImage";
 
 // Pillow on the backend can't read SVG/HEIC from other browsers; Safari
@@ -43,6 +44,7 @@ export function ImageDropzone({
   onReject,
   busy = false,
 }: ImageDropzoneProps) {
+  const { t } = useTranslation();
   // Phones and tablets get camera/gallery buttons instead of drag and drop.
   const isTouch = useMediaQuery("(pointer: coarse)", false);
   const cameraInput = useRef<HTMLInputElement>(null);
@@ -62,7 +64,7 @@ export function ImageDropzone({
         accept="image/*"
         capture="environment"
         hidden
-        aria-label="Take photo"
+        aria-label={t("photo.takePhoto")}
         onChange={(e) => {
           pick(e.currentTarget.files);
           e.currentTarget.value = "";
@@ -73,7 +75,7 @@ export function ImageDropzone({
         type="file"
         accept="image/*"
         hidden
-        aria-label="Choose from gallery"
+        aria-label={t("photo.chooseFromGallery")}
         onChange={(e) => {
           pick(e.currentTarget.files);
           e.currentTarget.value = "";
@@ -89,7 +91,7 @@ export function ImageDropzone({
         <LoadingOverlay visible={busy} />
         <Preview file={image} />
         <Text size="xs" c="dimmed">
-          {formatFileSize(image.size)} · will be uploaded as shown
+          {t("photo.willUpload", { size: formatFileSize(image.size) })}
         </Text>
         <Group justify="center">
           {isTouch && (
@@ -98,7 +100,7 @@ export function ImageDropzone({
               leftSection={<IconRefresh size={16} />}
               onClick={() => cameraInput.current?.click()}
             >
-              Retake
+              {t("photo.retake")}
             </Button>
           )}
           <Button
@@ -107,7 +109,7 @@ export function ImageDropzone({
             leftSection={<IconTrash size={16} />}
             onClick={onClear}
           >
-            Remove
+            {t("photo.remove")}
           </Button>
         </Group>
       </Stack>
@@ -123,7 +125,7 @@ export function ImageDropzone({
           <Button h={rem(96)} onClick={() => cameraInput.current?.click()}>
             <Stack gap={4} align="center">
               <IconCamera size={28} />
-              Take photo
+              {t("photo.takePhoto")}
             </Stack>
           </Button>
           <Button
@@ -133,12 +135,12 @@ export function ImageDropzone({
           >
             <Stack gap={4} align="center">
               <IconPhoto size={28} />
-              Gallery
+              {t("photo.gallery")}
             </Stack>
           </Button>
         </SimpleGrid>
         <Text size="xs" c="dimmed" ta="center">
-          Fill the frame with the cap, on a plain background.
+          {t("photo.hint")}
         </Text>
       </Stack>
     );
@@ -151,8 +153,8 @@ export function ImageDropzone({
         const code = rejections[0]?.errors[0]?.code;
         onReject?.(
           code === "file-too-large"
-            ? "That file is too large (max 40 MB)."
-            : "Use a JPEG, PNG or WebP image.",
+            ? t("photo.tooLarge")
+            : t("photo.wrongType"),
         );
       }}
       maxSize={MAX_PICK_BYTES}
@@ -199,11 +201,10 @@ export function ImageDropzone({
 
         <div>
           <Text size="xl" inline>
-            Drag image here or click to select
+            {t("photo.dropTitle")}
           </Text>
           <Text size="sm" c="dimmed" inline mt={7}>
-            Fill the frame with the cap, on a plain background. JPEG, PNG or
-            WebP.
+            {t("photo.dropHint")}
           </Text>
         </div>
       </Group>
@@ -216,6 +217,7 @@ export function ImageDropzone({
  * StrictMode remount can't leave the image pointing at a revoked URL.
  */
 function Preview({ file }: { file: File }) {
+  const { t } = useTranslation();
   const img = useRef<HTMLImageElement>(null);
   useEffect(() => {
     const url = URL.createObjectURL(file);
@@ -223,6 +225,13 @@ function Preview({ file }: { file: File }) {
     return () => URL.revokeObjectURL(url);
   }, [file]);
   return (
-    <Image ref={img} h={300} w="auto" fit="contain" radius="md" alt="Preview" />
+    <Image
+      ref={img}
+      h={300}
+      w="auto"
+      fit="contain"
+      radius="md"
+      alt={t("photo.preview")}
+    />
   );
 }

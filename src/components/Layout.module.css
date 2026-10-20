@@ -51,8 +51,15 @@
   text-underline-offset: 6px;
 }
 
-.burger {
-  margin-left: auto;
+/* Phones: the language and the menu sit at the right, next to each other. */
+.language {
+  flex: none;
+}
+
+@media (max-width: 47.99em) {
+  .language {
+    margin-left: auto;
+  }
 }
 
 .main {

@@ -1,6 +1,7 @@
 import { Button, Group, NumberInput, Stack, Text, Title } from "@mantine/core";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   generateAllAugmentations,
   generateEmbeddings,
@@ -10,6 +11,7 @@ import { notifySuccess } from "../../utils/notify";
 
 /** The three steps that make caps findable by photo, run in this order. */
 export function PipelineTab() {
+  const { t } = useTranslation();
   const [variations, setVariations] = useState(5);
   const onDone = (result: { message: string }) => notifySuccess(result.message);
   const augment = useMutation({
@@ -25,18 +27,15 @@ export function PipelineTab() {
   return (
     <Stack gap="lg" maw={640}>
       <Text size="sm" c="dimmed">
-        Run these after adding caps, in order. Each step works on the whole
-        collection and can take several minutes on the server.
+        {t("admin.pipeline.intro")}
       </Text>
 
       <Stack gap="xs">
-        <Title order={3}>1. Make variations</Title>
-        <Text size="sm">
-          Creates rotated and re-lit copies of every cap photo.
-        </Text>
+        <Title order={3}>{t("admin.pipeline.variationsTitle")}</Title>
+        <Text size="sm">{t("admin.pipeline.variationsText")}</Text>
         <Group align="flex-end">
           <NumberInput
-            label="Variations per cap"
+            label={t("admin.pipeline.variationsPerCap")}
             value={variations}
             onChange={(value) => setVariations(Number(value))}
             min={1}
@@ -48,37 +47,35 @@ export function PipelineTab() {
             loading={augment.isPending}
             onClick={() => augment.mutate(variations)}
           >
-            Make variations
+            {t("admin.pipeline.makeVariations")}
           </Button>
         </Group>
       </Stack>
 
       <Stack gap="xs">
-        <Title order={3}>2. Describe the photos</Title>
-        <Text size="sm">
-          Turns every variation into numbers the search can compare.
-        </Text>
+        <Title order={3}>{t("admin.pipeline.describeTitle")}</Title>
+        <Text size="sm">{t("admin.pipeline.describeText")}</Text>
         <Group>
           <Button
             variant="default"
             loading={embed.isPending}
             onClick={() => embed.mutate()}
           >
-            Describe photos
+            {t("admin.pipeline.describe")}
           </Button>
         </Group>
       </Stack>
 
       <Stack gap="xs">
-        <Title order={3}>3. Rebuild the search index</Title>
-        <Text size="sm">Makes the Matcher use the new descriptions.</Text>
+        <Title order={3}>{t("admin.pipeline.indexTitle")}</Title>
+        <Text size="sm">{t("admin.pipeline.indexText")}</Text>
         <Group>
           <Button
             variant="default"
             loading={index.isPending}
             onClick={() => index.mutate()}
           >
-            Rebuild index
+            {t("admin.pipeline.rebuild")}
           </Button>
         </Group>
       </Stack>

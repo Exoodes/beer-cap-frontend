@@ -8,6 +8,7 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { updateBeer } from "../../api/beerCaps";
 import { updateBrand, updateCountry } from "../../api/references";
 import type { Beer, BeerBrandWithBeers, CountryWithBeers } from "../../types";
@@ -28,6 +29,7 @@ export function EditBeerForm({
   countries: CountryWithBeers[];
   onDone: () => void;
 }) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const form = useForm({
     initialValues: {
@@ -37,8 +39,8 @@ export function EditBeerForm({
       country_id: beer.country?.id.toString() ?? null,
     },
     validate: {
-      name: (v) => (v.trim() ? null : "Required"),
-      beer_brand_id: (v) => (v ? null : "Select a brand"),
+      name: (v) => (v.trim() ? null : t("common.required")),
+      beer_brand_id: (v) => (v ? null : t("admin.form.selectBrand")),
     },
   });
 
@@ -56,7 +58,7 @@ export function EditBeerForm({
       queryClient.invalidateQueries({ queryKey: ["beerCaps"] });
       // Prefix match: every open cap page shows the new name.
       queryClient.invalidateQueries({ queryKey: ["beerCap"] });
-      notifySuccess("Beer updated.");
+      notifySuccess(t("admin.form.beerUpdated"));
       onDone();
     },
   });
@@ -64,24 +66,24 @@ export function EditBeerForm({
   return (
     <form onSubmit={form.onSubmit((v) => mutation.mutate(v))}>
       <Stack>
-        <TextInput label="Name" {...form.getInputProps("name")} />
+        <TextInput label={t("common.name")} {...form.getInputProps("name")} />
         <NumberInput
-          label="Rating"
+          label={t("admin.form.rating")}
           min={0}
           max={10}
           {...form.getInputProps("rating")}
         />
         <Select
-          label="Brand"
-          placeholder="Pick the brand"
+          label={t("admin.form.brand")}
+          placeholder={t("admin.form.pickBrand")}
           data={brands.map((b) => ({ value: b.id.toString(), label: b.name }))}
           searchable
           filter={wordFilter}
           {...form.getInputProps("beer_brand_id")}
         />
         <Select
-          label="Country"
-          placeholder="No country"
+          label={t("admin.form.country")}
+          placeholder={t("admin.form.noCountry")}
           data={countries.map((c) => ({
             value: c.id.toString(),
             label: c.name,
@@ -92,7 +94,7 @@ export function EditBeerForm({
           {...form.getInputProps("country_id")}
         />
         <Button type="submit" loading={mutation.isPending}>
-          Save
+          {t("common.save")}
         </Button>
       </Stack>
     </form>
@@ -106,10 +108,11 @@ export function EditBrandForm({
   brand: BeerBrandWithBeers;
   onDone: () => void;
 }) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const form = useForm({
     initialValues: { name: brand.name },
-    validate: { name: (v) => (v.trim() ? null : "Required") },
+    validate: { name: (v) => (v.trim() ? null : t("common.required")) },
   });
 
   const mutation = useMutation({
@@ -121,7 +124,7 @@ export function EditBrandForm({
       queryClient.invalidateQueries({ queryKey: ["beerCaps"] });
       // Prefix match: every open cap page shows the new name.
       queryClient.invalidateQueries({ queryKey: ["beerCap"] });
-      notifySuccess("Brand updated.");
+      notifySuccess(t("admin.form.brandUpdated"));
       onDone();
     },
   });
@@ -129,9 +132,9 @@ export function EditBrandForm({
   return (
     <form onSubmit={form.onSubmit((v) => mutation.mutate(v))}>
       <Stack>
-        <TextInput label="Name" {...form.getInputProps("name")} />
+        <TextInput label={t("common.name")} {...form.getInputProps("name")} />
         <Button type="submit" loading={mutation.isPending}>
-          Save
+          {t("common.save")}
         </Button>
       </Stack>
     </form>
@@ -145,13 +148,14 @@ export function EditCountryForm({
   country: CountryWithBeers;
   onDone: () => void;
 }) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const form = useForm({
     initialValues: {
       name: country.name,
       description: country.description ?? "",
     },
-    validate: { name: (v) => (v.trim() ? null : "Required") },
+    validate: { name: (v) => (v.trim() ? null : t("common.required")) },
   });
 
   const mutation = useMutation({
@@ -165,7 +169,7 @@ export function EditCountryForm({
       queryClient.invalidateQueries({ queryKey: ["beerCaps"] });
       // Prefix match: every open cap page shows the new name.
       queryClient.invalidateQueries({ queryKey: ["beerCap"] });
-      notifySuccess("Country updated.");
+      notifySuccess(t("admin.form.countryUpdated"));
       onDone();
     },
   });
@@ -173,10 +177,13 @@ export function EditCountryForm({
   return (
     <form onSubmit={form.onSubmit((v) => mutation.mutate(v))}>
       <Stack>
-        <TextInput label="Name" {...form.getInputProps("name")} />
-        <Textarea label="Description" {...form.getInputProps("description")} />
+        <TextInput label={t("common.name")} {...form.getInputProps("name")} />
+        <Textarea
+          label={t("admin.form.description")}
+          {...form.getInputProps("description")}
+        />
         <Button type="submit" loading={mutation.isPending}>
-          Save
+          {t("common.save")}
         </Button>
       </Stack>
     </form>

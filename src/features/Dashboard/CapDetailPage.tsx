@@ -17,6 +17,7 @@ import {
 } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useAdmin } from "../../admin/adminContext";
 import { deleteCap, getAllCaps, getCapById } from "../../api/beerCaps";
@@ -24,7 +25,7 @@ import { CapCircle, CapSocket } from "../../components/CapCircle";
 import { CapGrid, CapTile } from "../../components/CapTile";
 import type { BeerCap } from "../../types";
 import { confirmDelete } from "../../utils/confirm";
-import { formatDate, pluralCaps } from "../../utils/format";
+import { formatDate } from "../../utils/format";
 import { getImageUrl } from "../../utils/imageUtils";
 import { notifySuccess } from "../../utils/notify";
 import classes from "./CapDetailPage.module.css";
@@ -40,6 +41,7 @@ import { EditCapModal } from "./EditCapModal";
 const MORE_FROM_BRAND = 10;
 
 export function CapDetailPage() {
+  const { t } = useTranslation();
   const { id: idParam } = useParams();
   const id = Number(idParam);
   const location = useLocation();
@@ -91,7 +93,7 @@ export function CapDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["beerCaps"] });
       queryClient.invalidateQueries({ queryKey: ["beers"] });
-      notifySuccess("Cap deleted.");
+      notifySuccess(t("cap.deleted"));
       navigate(backTo, { replace: true });
     },
   });
@@ -99,7 +101,7 @@ export function CapDetailPage() {
   const backLink = (
     <Link to={backTo} viewTransition className={classes.back}>
       <IconArrowLeft size={20} stroke={2.2} />
-      Collection
+      {t("nav.collection")}
     </Link>
   );
 
@@ -120,8 +122,8 @@ export function CapDetailPage() {
     return (
       <Stack gap="sm" align="flex-start">
         {backLink}
-        <Text fw={600}>This cap isn't in the collection.</Text>
-        <Text c="dimmed">It may have been deleted.</Text>
+        <Text fw={600}>{t("cap.notFound")}</Text>
+        <Text c="dimmed">{t("cap.maybeDeleted")}</Text>
       </Stack>
     );
   }
@@ -139,8 +141,8 @@ export function CapDetailPage() {
 
   const handleDelete = () => {
     confirmDelete({
-      title: `Delete this ${beer.name} cap?`,
-      message: "Its photo is deleted too. This can't be undone.",
+      title: t("cap.deleteTitle", { beer: beer.name }),
+      message: t("cap.deleteMessage"),
       onConfirm: () => deleteMutation.mutate(cap.id),
     });
   };
@@ -148,7 +150,7 @@ export function CapDetailPage() {
   const hasNeighbours = index >= 0 && order.length > 1;
   const position = hasNeighbours && (
     <span className={classes.position}>
-      {index + 1} of {order.length}
+      {t("cap.position", { index: index + 1, total: order.length })}
     </span>
   );
   const stepButton = (direction: "previous" | "next", className: string) => {
@@ -158,7 +160,9 @@ export function CapDetailPage() {
         variant="default"
         size={56}
         radius="xl"
-        aria-label={direction === "previous" ? "Previous cap" : "Next cap"}
+        aria-label={
+          direction === "previous" ? t("cap.previous") : t("cap.next")
+        }
         disabled={target === undefined}
         onClick={() => goTo(target)}
         className={className}
@@ -198,7 +202,7 @@ export function CapDetailPage() {
             size="sm"
             c="dimmed"
           >
-            Open the original photo
+            {t("cap.openOriginal")}
           </Anchor>
         </div>
 
@@ -214,17 +218,17 @@ export function CapDetailPage() {
           )}
 
           <dl className={classes.facts}>
-            <dt>Country</dt>
-            <dd>{beer.country?.name ?? "Not set"}</dd>
-            <dt>Collected</dt>
+            <dt>{t("cap.country")}</dt>
+            <dd>{beer.country?.name ?? t("cap.notSet")}</dd>
+            <dt>{t("cap.collected")}</dt>
             <dd>
               {cap.collected_date
                 ? formatDate(cap.collected_date)
-                : "Not recorded"}
+                : t("cap.notRecorded")}
             </dd>
             {!!beer.rating && (
               <>
-                <dt>Rating</dt>
+                <dt>{t("cap.rating")}</dt>
                 <dd>{beer.rating}/10</dd>
               </>
             )}
@@ -234,7 +238,7 @@ export function CapDetailPage() {
             <div className={classes.tagActions}>
               <UnstyledButton className={classes.edit} onClick={openEdit}>
                 <IconPencil size={16} stroke={2.2} />
-                Edit
+                {t("common.edit")}
               </UnstyledButton>
               <UnstyledButton
                 className={classes.delete}
@@ -242,7 +246,7 @@ export function CapDetailPage() {
                 onClick={handleDelete}
               >
                 <IconTrash size={16} stroke={2.2} />
-                Delete
+                {t("common.delete")}
               </UnstyledButton>
             </div>
           )}
@@ -251,11 +255,14 @@ export function CapDetailPage() {
       </div>
 
       {sameBeer.length > 0 && (
-        <RelatedCaps title={`Other caps of ${beer.name}`} caps={sameBeer} />
+        <RelatedCaps
+          title={t("cap.otherCaps", { beer: beer.name })}
+          caps={sameBeer}
+        />
       )}
       {brand && sameBrand.length > 0 && (
         <RelatedCaps
-          title={`More from ${brand.name}`}
+          title={t("cap.moreFrom", { brand: brand.name })}
           caps={sameBrand.slice(0, MORE_FROM_BRAND)}
           link={
             sameBrand.length > MORE_FROM_BRAND && (
@@ -265,8 +272,10 @@ export function CapDetailPage() {
                 size="sm"
                 c="dimmed"
               >
-                All {pluralCaps(sameBrand.length + sameBeer.length + 1)} from{" "}
-                {brand.name}
+                {t("cap.allFrom", {
+                  count: sameBrand.length + sameBeer.length + 1,
+                  brand: brand.name,
+                })}
               </Anchor>
             )
           }

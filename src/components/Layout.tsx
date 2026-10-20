@@ -9,15 +9,18 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { IconLock, IconLockOpen, IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAdmin } from "../admin/adminContext";
 import { useMatchingEnabled } from "../hooks/useMatchingEnabled";
 import { notifySuccess } from "../utils/notify";
 import { CapMark } from "./CapMark";
 import { HeaderSlotContext } from "./headerSlotContext";
+import { LanguageMenu } from "./LanguageMenu";
 import classes from "./Layout.module.css";
 
 export function Layout() {
+  const { t } = useTranslation();
   const [menuOpened, { toggle: toggleMenu, close: closeMenu }] =
     useDisclosure();
   const { isAdmin, lock } = useAdmin();
@@ -28,8 +31,10 @@ export function Layout() {
 
   // The name links to the collection; the rest of the menu is admin-only.
   const links = [
-    ...(isAdmin && matchingEnabled ? [{ to: "/match", label: "Matcher" }] : []),
-    ...(isAdmin ? [{ to: "/admin", label: "Admin" }] : []),
+    ...(isAdmin && matchingEnabled
+      ? [{ to: "/match", label: t("nav.matcher") }]
+      : []),
+    ...(isAdmin ? [{ to: "/admin", label: t("nav.admin") }] : []),
   ];
   // A cap's page is part of the collection.
   const isCurrent = (to: string) =>
@@ -41,7 +46,7 @@ export function Layout() {
     lock();
     closeMenu();
     navigate("/");
-    notifySuccess("Admin mode locked on this device.");
+    notifySuccess(t("nav.adminLocked"));
   };
 
   return (
@@ -50,13 +55,13 @@ export function Layout() {
         <Container size="xl" className={classes.header}>
           <Link to="/" className={`${classes.brand} display`}>
             <CapMark />
-            Beer Caps
+            {t("app.name")}
           </Link>
           <div ref={setSearchSlot} className={classes.searchSlot} />
 
           {isAdmin && (
             <>
-              <nav aria-label="Main" className={classes.nav}>
+              <nav aria-label={t("nav.main")} className={classes.nav}>
                 {links.map((link) => (
                   <Link
                     key={link.to}
@@ -75,7 +80,7 @@ export function Layout() {
                 leftSection={<IconPlus size={18} stroke={2.5} />}
                 className={classes.wide}
               >
-                Add cap
+                {t("nav.addCap")}
               </Button>
               <Menu position="bottom-end" withArrow>
                 <Menu.Target>
@@ -84,30 +89,32 @@ export function Layout() {
                     color="gray"
                     size={48}
                     radius="xl"
-                    aria-label="Admin mode is on"
+                    aria-label={t("nav.adminOn")}
                     className={classes.wide}
                   >
                     <IconLockOpen size={20} />
                   </ActionIcon>
                 </Menu.Target>
                 <Menu.Dropdown>
-                  <Menu.Label>Admin mode is on</Menu.Label>
+                  <Menu.Label>{t("nav.adminOn")}</Menu.Label>
                   <Menu.Item
                     leftSection={<IconLock size={16} />}
                     onClick={lockAdmin}
                   >
-                    Lock admin mode
+                    {t("nav.lockAdmin")}
                   </Menu.Item>
                 </Menu.Dropdown>
               </Menu>
-              <Burger
-                opened={menuOpened}
-                onClick={toggleMenu}
-                hiddenFrom="sm"
-                aria-label={menuOpened ? "Close menu" : "Open menu"}
-                className={classes.burger}
-              />
             </>
+          )}
+          <LanguageMenu className={classes.language} />
+          {isAdmin && (
+            <Burger
+              opened={menuOpened}
+              onClick={toggleMenu}
+              hiddenFrom="sm"
+              aria-label={menuOpened ? t("nav.closeMenu") : t("nav.openMenu")}
+            />
           )}
         </Container>
       </header>
@@ -118,11 +125,11 @@ export function Layout() {
           onClose={closeMenu}
           position="right"
           size="xs"
-          title={<span className="display">Beer Caps</span>}
+          title={<span className="display">{t("app.name")}</span>}
           hiddenFrom="sm"
         >
-          <nav aria-label="Main" className={classes.menu}>
-            {[{ to: "/", label: "Collection" }, ...links].map((link) => (
+          <nav aria-label={t("nav.main")} className={classes.menu}>
+            {[{ to: "/", label: t("nav.collection") }, ...links].map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
@@ -143,7 +150,7 @@ export function Layout() {
             onClick={closeMenu}
             mt="lg"
           >
-            Add cap
+            {t("nav.addCap")}
           </Button>
           <Button
             variant="subtle"
@@ -153,7 +160,7 @@ export function Layout() {
             onClick={lockAdmin}
             mt="xs"
           >
-            Lock admin mode
+            {t("nav.lockAdmin")}
           </Button>
         </Drawer>
       )}

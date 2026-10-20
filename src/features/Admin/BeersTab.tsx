@@ -7,6 +7,7 @@ import {
 } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { getAllCaps } from "../../api/beerCaps";
 import {
   deleteBeer,
@@ -30,6 +31,7 @@ import { MergeModal } from "./MergeModal";
 const EMPTY_THUMB = <CapSocket size={40} />;
 
 export function BeersTab() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { data: beers = [] } = useQuery({
     queryKey: ["beers"],
@@ -73,7 +75,7 @@ export function BeersTab() {
       for (const key of ["beers", "beerCaps", "brands", "countries"]) {
         queryClient.invalidateQueries({ queryKey: [key] });
       }
-      notifySuccess("Beer deleted.");
+      notifySuccess(t("admin.beers.deleted"));
     },
   });
 
@@ -83,13 +85,11 @@ export function BeersTab() {
   const askDelete = (beer: Beer) => {
     const count = capCount(beer);
     confirmDelete({
-      title: `Delete ${beer.name}?`,
+      title: t("admin.deleteQuestion", { name: beer.name }),
       message:
         count === 0
-          ? "This can't be undone."
-          : count === 1
-            ? "Its cap and the cap's photo are deleted too. This can't be undone."
-            : `Its ${pluralCaps(count)} and their photos are deleted too. This can't be undone.`,
+          ? t("common.cantUndo")
+          : t("admin.beers.deleteWithCaps", { count }),
       onConfirm: () => deleteMutation.mutate(beer.id),
     });
   };
@@ -100,8 +100,8 @@ export function BeersTab() {
     <Stack gap="md">
       <Group justify="space-between" wrap="nowrap">
         <TextInput
-          aria-label="Search beers"
-          placeholder="Search beer, brand or country"
+          aria-label={t("admin.beers.searchLabel")}
+          placeholder={t("admin.beers.searchPlaceholder")}
           leftSection={<IconSearch size={16} />}
           value={search}
           onChange={(event) => setSearch(event.currentTarget.value)}
@@ -109,13 +109,16 @@ export function BeersTab() {
         />
         <Text size="sm" c="dimmed">
           {shown.length === beers.length
-            ? `${beers.length} beers`
-            : `${shown.length} of ${beers.length} beers`}
+            ? t("common.beers", { count: beers.length })
+            : t("admin.beers.filtered", {
+                shown: shown.length,
+                count: beers.length,
+              })}
         </Text>
       </Group>
 
       {shown.length === 0 ? (
-        <Text c="dimmed">No beers match “{search}”.</Text>
+        <Text c="dimmed">{t("admin.beers.noMatch", { search })}</Text>
       ) : (
         <AdminList>
           {shown.map((beer) => {
@@ -123,7 +126,9 @@ export function BeersTab() {
             const details = [
               beer.beer_brand?.name,
               beer.country?.name,
-              beer.rating ? `rated ${beer.rating}/10` : null,
+              beer.rating
+                ? t("admin.beers.rated", { rating: beer.rating })
+                : null,
             ]
               .filter(Boolean)
               .join(", ");
@@ -142,20 +147,20 @@ export function BeersTab() {
                 meta={pluralCaps(capCount(beer))}
                 actions={[
                   {
-                    label: `Edit ${beer.name}`,
-                    short: "Edit",
+                    label: t("admin.editNamed", { name: beer.name }),
+                    short: t("common.edit"),
                     icon: <IconPencil size={18} />,
                     onClick: () => setEditing(beer),
                   },
                   {
-                    label: `Merge ${beer.name} into another beer`,
-                    short: "Merge into another beer",
+                    label: t("admin.beers.mergeLabel", { name: beer.name }),
+                    short: t("admin.beers.mergeShort"),
                     icon: <IconArrowMerge size={18} />,
                     onClick: () => setMerging(beer),
                   },
                   {
-                    label: `Delete ${beer.name}`,
-                    short: "Delete",
+                    label: t("admin.deleteNamed", { name: beer.name }),
+                    short: t("common.delete"),
                     icon: <IconTrash size={18} />,
                     danger: true,
                     loading:
@@ -173,7 +178,7 @@ export function BeersTab() {
       <Modal
         opened={editing !== null}
         onClose={() => setEditing(null)}
-        title={editing ? `Edit ${editing.name}` : ""}
+        title={editing ? t("admin.editNamed", { name: editing.name }) : ""}
       >
         {editing && (
           <EditBeerForm
@@ -188,13 +193,15 @@ export function BeersTab() {
       <MergeModal
         source={merging}
         onClose={() => setMerging(null)}
+        title={
+          merging ? t("admin.beers.mergeLabel", { name: merging.name }) : ""
+        }
         explanation={
           merging &&
-          `Use this for a duplicate. ${
-            capCount(merging) === 1
-              ? "Its cap moves"
-              : `Its ${pluralCaps(capCount(merging))} move`
-          } to the beer you pick, then ${merging.name} is deleted. A country or rating the other beer lacks is taken over.`
+          t("admin.beers.mergeExplanation", {
+            count: capCount(merging),
+            name: merging.name,
+          })
         }
         renderPicker={(value, onChange) => (
           <BeerPicker
@@ -205,7 +212,6 @@ export function BeersTab() {
             allowCreate={false}
           />
         )}
-        noun="beer"
         nameOf={nameOf}
         merge={mergeBeer}
       />

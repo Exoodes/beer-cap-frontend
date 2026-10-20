@@ -13,6 +13,8 @@ import {
   NO_COUNTRY,
 } from "./capFilters";
 
+const LABELS = { noCountry: "No country", noBrand: "No brand" };
+
 const CZ = { id: 1, name: "Česká republika" };
 const DE = { id: 2, name: "Německo" };
 
@@ -132,7 +134,7 @@ describe("sorting", () => {
 
 describe("facetOptions", () => {
   it("lists countries with counts in Czech order", () => {
-    expect(facetOptions(CAPS, "country")).toEqual([
+    expect(facetOptions(CAPS, "country", LABELS)).toEqual([
       {
         value: "1",
         label: "Česká republika (5)",
@@ -150,7 +152,7 @@ describe("facetOptions", () => {
   });
 
   it("lists brands with counts", () => {
-    expect(facetOptions(CAPS, "brand")[0]).toMatchObject({
+    expect(facetOptions(CAPS, "brand", LABELS)[0]).toMatchObject({
       value: "10",
       label: "Bernard (2)",
     });
@@ -187,13 +189,13 @@ describe("groupCaps", () => {
   const sorted = filterAndSortCaps(CAPS, DEFAULT_FILTERS);
 
   it("keeps one section when not grouping", () => {
-    expect(groupCaps(sorted, "none")).toEqual([
+    expect(groupCaps(sorted, "none", LABELS)).toEqual([
       { key: "all", title: "", caps: sorted },
     ]);
   });
 
   it("groups by country in Czech order, no country last, order kept", () => {
-    const groups = groupCaps(sorted, "country");
+    const groups = groupCaps(sorted, "country", LABELS);
     expect(groups.map((g) => [g.title, ids(g.caps)])).toEqual([
       ["Česká republika", [5, 4, 3, 2, 1]],
       ["Německo", [6]],
@@ -202,7 +204,7 @@ describe("groupCaps", () => {
   });
 
   it("groups by brand", () => {
-    expect(groupCaps(sorted, "brand").map((g) => g.title)).toEqual([
+    expect(groupCaps(sorted, "brand", LABELS).map((g) => g.title)).toEqual([
       "Bernard",
       "Černá Hora",
       "Paulaner",

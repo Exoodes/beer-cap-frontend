@@ -2,6 +2,7 @@ import { ActionIcon, Group, Menu, Text, Tooltip } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { IconDots } from "@tabler/icons-react";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import classes from "./Admin.module.css";
 
 export function AdminList({ children }: { children: ReactNode }) {
@@ -109,6 +110,7 @@ function RowButton({
 }
 
 function RowMenu({ title, actions }: { title: string; actions: RowAction[] }) {
+  const { t } = useTranslation();
   const busy = actions.some((action) => action.loading);
   return (
     <Menu position="bottom-end" withArrow width={240}>
@@ -118,7 +120,7 @@ function RowMenu({ title, actions }: { title: string; actions: RowAction[] }) {
           color="gray"
           size="lg"
           loading={busy}
-          aria-label={`Actions for ${title}`}
+          aria-label={t("admin.actionsFor", { name: title })}
         >
           <IconDots size={18} />
         </ActionIcon>

@@ -1,5 +1,6 @@
 import { Button, Center, Stack, Text, Title } from "@mantine/core";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   BrowserRouter,
   Link,
@@ -45,13 +46,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function NotFoundPage() {
+  const { t } = useTranslation();
   return (
     <Center h="50vh">
       <Stack align="center">
-        <Title order={2}>Page not found</Title>
-        <Text c="dimmed">This page doesn't exist.</Text>
+        <Title order={2}>{t("notFound.title")}</Title>
+        <Text c="dimmed">{t("notFound.text")}</Text>
         <Button component={Link} to="/">
-          Back to the collection
+          {t("notFound.back")}
         </Button>
       </Stack>
     </Center>

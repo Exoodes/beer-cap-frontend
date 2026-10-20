@@ -12,6 +12,7 @@ import { DateInput } from "@mantine/dates";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { createCap, getAllCaps } from "../../api/beerCaps";
 import { getBeers, getBrands, getCountries } from "../../api/references";
@@ -46,6 +47,7 @@ function appendChoice(
 }
 
 export function AddCapPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -149,16 +151,16 @@ export function AddCapPage() {
 
   const alreadyHaveIt = () => {
     startNextCap();
-    notifySuccess("Not saved: that cap is already in the collection.");
+    notifySuccess(t("addCap.notSaved"));
   };
 
   const save = (then: "next" | "close") => {
     const found: Partial<Record<Field, string>> = {};
-    if (!file) found.file = "Add a photo of the cap.";
-    if (!beer) found.beer = "Pick the beer, or add it as a new one.";
+    if (!file) found.file = t("addCap.needPhoto");
+    if (!beer) found.beer = t("addCap.needBeer");
     if (newBeerName) {
-      if (!brand) found.brand = "Pick the brand, or add a new one.";
-      if (!country) found.country = "Pick the country, or add a new one.";
+      if (!brand) found.brand = t("addCap.needBrand");
+      if (!country) found.country = t("addCap.needCountry");
     }
     setErrors(found);
     if (!file || !beer || Object.keys(found).length) return;
@@ -179,10 +181,10 @@ export function AddCapPage() {
       onSuccess: (cap) => {
         setJustAdded((added) => [cap, ...added]);
         if (then === "close") {
-          notifySuccess(`Added ${cap.beer.name}.`);
+          notifySuccess(t("addCap.added", { beer: cap.beer.name }));
           navigate("/");
         } else {
-          notifySuccess(`Added ${cap.beer.name}. Ready for the next cap.`);
+          notifySuccess(t("addCap.addedNext", { beer: cap.beer.name }));
           startNextCap();
         }
       },
@@ -194,22 +196,22 @@ export function AddCapPage() {
   return (
     <Stack gap="xl" maw={640} mx="auto" pb="xl">
       <Group justify="space-between" align="baseline">
-        <Title order={1}>Add a cap</Title>
+        <Title order={1}>{t("addCap.title")}</Title>
         <Anchor component={Link} to="/">
-          Cancel
+          {t("common.cancel")}
         </Anchor>
       </Group>
 
       <Stack gap="xs">
         <Title order={2} fz="h3">
-          Photo
+          {t("addCap.photo")}
         </Title>
         <ImageDropzone
           image={file}
           onDrop={handlePick}
           onClear={() => setFile(null)}
           onReject={(message) =>
-            notifyError(new Error(message), "Photo not added")
+            notifyError(new Error(message), t("photo.notAdded"))
           }
           busy={preparing}
         />
@@ -222,7 +224,7 @@ export function AddCapPage() {
 
       <Stack gap="sm">
         <Title order={2} fz="h3">
-          Which beer is this?
+          {t("addCap.whichBeer")}
         </Title>
         <BeerPicker
           beers={beers}
@@ -235,12 +237,13 @@ export function AddCapPage() {
         {existingBeer && existingCaps.length > 0 && (
           <div className={classes.panel}>
             <Text fw={600}>
-              You already have {pluralCaps(existingCaps.length)} of{" "}
-              {existingBeer.name}
+              {t("addCap.alreadyHave", {
+                count: existingCaps.length,
+                beer: existingBeer.name,
+              })}
             </Text>
             <Text size="sm" c="dimmed">
-              If the new cap looks the same as one of these, you don't need to
-              add it.
+              {t("addCap.looksSame")}
             </Text>
             <div className={classes.compare}>
               {existingCaps.map((cap) => (
@@ -253,20 +256,20 @@ export function AddCapPage() {
                 <figure className={classes.figure}>
                   <CapCircle
                     file={file}
-                    alt="New photo"
+                    alt={t("addCap.newPhoto")}
                     size={88}
                     highlighted
                   />
-                  <figcaption>New photo</figcaption>
+                  <figcaption>{t("addCap.newPhoto")}</figcaption>
                 </figure>
               )}
             </div>
             <Group gap="sm">
               <Button variant="default" onClick={alreadyHaveIt}>
-                I already have it
+                {t("addCap.alreadyHaveIt")}
               </Button>
               <Text size="sm" c="dimmed">
-                A new design? Fill in the details below and save.
+                {t("addCap.newDesign")}
               </Text>
             </Group>
           </div>
@@ -274,9 +277,9 @@ export function AddCapPage() {
 
         {similarBeers.length > 0 && (
           <div className={classes.panel}>
-            <Text fw={600}>Is it one of these?</Text>
+            <Text fw={600}>{t("addCap.oneOfThese")}</Text>
             <Text size="sm" c="dimmed">
-              Similar beers are already in the collection.
+              {t("addCap.similarExist")}
             </Text>
             <Stack gap="xs">
               {similarBeers.map((similar) => {
@@ -304,7 +307,7 @@ export function AddCapPage() {
                       variant="light"
                       onClick={() => chooseBeer({ id: similar.id })}
                     >
-                      Use this beer
+                      {t("addCap.useThisBeer")}
                     </Button>
                   </Group>
                 );
@@ -336,19 +339,19 @@ export function AddCapPage() {
 
       <Stack gap="sm">
         <Title order={2} fz="h3">
-          Details
+          {t("addCap.details")}
         </Title>
         <SimpleGrid cols={{ base: 1, xs: 2 }}>
           <TextInput
-            label="Variant"
-            description="Optional"
-            placeholder="e.g. Christmas edition, 2023 design"
+            label={t("capForm.variant")}
+            description={t("common.optional")}
+            placeholder={t("capForm.variantPlaceholder")}
             value={variant}
             onChange={(event) => setVariant(event.currentTarget.value)}
           />
           <DateInput
-            label="Collected"
-            description="When you got it"
+            label={t("capForm.collected")}
+            description={t("capForm.collectedHint")}
             valueFormat="D. M. YYYY"
             clearable
             maxDate={new Date()}
@@ -365,7 +368,7 @@ export function AddCapPage() {
           disabled={busy}
           onClick={() => save("next")}
         >
-          Save and add next
+          {t("addCap.saveNext")}
         </Button>
         <Button
           size="md"
@@ -373,14 +376,14 @@ export function AddCapPage() {
           disabled={busy}
           onClick={() => save("close")}
         >
-          Save and close
+          {t("addCap.saveClose")}
         </Button>
       </div>
 
       {justAdded.length > 0 && (
         <Stack gap="sm">
           <Title order={2} fz="h3">
-            Added just now
+            {t("addCap.addedJustNow")}
           </Title>
           <div className={classes.added}>
             {justAdded.map((cap) => (

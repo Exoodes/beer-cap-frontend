@@ -1,5 +1,6 @@
 import { Group, Stack, Text } from "@mantine/core";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { CapCircle, CapSocket } from "../../components/CapCircle";
 import { type Choice, CreatablePicker } from "../../components/CreatablePicker";
 import type {
@@ -24,6 +25,7 @@ export function BeerPicker({
   capsByBeer,
   ...props
 }: PickerProps & { beers: Beer[]; capsByBeer: Map<number, BeerCap[]> }) {
+  const { t } = useTranslation();
   const items = beers.map((beer) => ({
     id: beer.id,
     name: beer.name,
@@ -36,14 +38,14 @@ export function BeerPicker({
   return (
     <CreatablePicker
       {...props}
-      label="Beer"
-      placeholder="Type the name on the cap"
+      label={t("picker.beerLabel")}
+      placeholder={t("picker.beerPlaceholder")}
       items={items}
       // The same name can exist under another brand.
       createWhenExact
       createLabel={(name) => (
         <Text size="sm" fw={600}>
-          + Add “{name}” as a new beer
+          {t("picker.beerCreate", { name })}
         </Text>
       )}
       renderOption={({ beer }) => {
@@ -79,6 +81,7 @@ export function BeerPicker({
 }
 
 function NamedCountOption({ name, count }: { name: string; count?: number }) {
+  const { t } = useTranslation();
   return (
     <Group justify="space-between" wrap="nowrap">
       <Text size="sm" truncate>
@@ -86,7 +89,7 @@ function NamedCountOption({ name, count }: { name: string; count?: number }) {
       </Text>
       {count !== undefined && (
         <Text size="xs" c="dimmed" style={{ flex: "none" }}>
-          {count === 1 ? "1 beer" : `${count} beers`}
+          {t("common.beers", { count })}
         </Text>
       )}
     </Group>
@@ -97,15 +100,16 @@ export function BrandPicker({
   brands,
   ...props
 }: PickerProps & { brands: BeerBrandWithBeers[] }) {
+  const { t } = useTranslation();
   return (
     <CreatablePicker
       {...props}
-      label="Brand"
-      placeholder="The brand on the cap"
+      label={t("picker.brandLabel")}
+      placeholder={t("picker.brandPlaceholder")}
       items={brands}
       createLabel={(name) => (
         <Text size="sm" fw={600}>
-          + Add “{name}” as a new brand
+          {t("picker.brandCreate", { name })}
         </Text>
       )}
       renderOption={(brand) => (
@@ -122,15 +126,16 @@ export function CountryPicker({
   countries,
   ...props
 }: PickerProps & { countries: CountryWithBeers[] }) {
+  const { t } = useTranslation();
   return (
     <CreatablePicker
       {...props}
-      label="Country"
-      placeholder="Where it's brewed"
+      label={t("picker.countryLabel")}
+      placeholder={t("picker.countryPlaceholder")}
       items={countries}
       createLabel={(name) => (
         <Text size="sm" fw={600}>
-          + Add “{name}” as a new country
+          {t("picker.countryCreate", { name })}
         </Text>
       )}
       renderOption={(country) => (

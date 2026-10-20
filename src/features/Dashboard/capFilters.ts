@@ -3,36 +3,34 @@
 import type { BeerCap } from "../../types";
 import { collator, matchesWords } from "../../utils/search";
 
-export const SORT_OPTIONS = [
-  { value: "recent", label: "Recently added" },
-  { value: "name", label: "Beer name (A–Z)" },
-  { value: "brand", label: "Brand (A–Z)" },
-  { value: "country", label: "Country (A–Z)" },
-  { value: "rating", label: "Rating (best first)" },
-  { value: "collected", label: "Collected (newest first)" },
+// Labels are in the translations (filters.sortBy, filters.groupBy).
+export const SORT_KEYS = [
+  "recent",
+  "name",
+  "brand",
+  "country",
+  "rating",
+  "collected",
 ] as const;
 
-export type SortKey = (typeof SORT_OPTIONS)[number]["value"];
+export type SortKey = (typeof SORT_KEYS)[number];
 
-export const RATING_OPTIONS = [
-  { value: "unrated", label: "Unrated" },
-  { value: "5", label: "5+" },
-  { value: "7", label: "7+" },
-  { value: "9", label: "9+" },
-] as const;
+export const RATING_FILTERS = ["unrated", "5", "7", "9"] as const;
 
-export type RatingFilter = (typeof RATING_OPTIONS)[number]["value"] | null;
+export type RatingFilter = (typeof RATING_FILTERS)[number] | null;
 
-export const GROUP_OPTIONS = [
-  { value: "none", label: "All" },
-  { value: "country", label: "Country" },
-  { value: "brand", label: "Brand" },
-] as const;
+export const GROUP_KEYS = ["none", "country", "brand"] as const;
 
-export type GroupKey = (typeof GROUP_OPTIONS)[number]["value"];
+export type GroupKey = (typeof GROUP_KEYS)[number];
 
 /** Facet value for caps whose beer has no country. */
 export const NO_COUNTRY = "none";
+
+/** Names for caps without a country or brand, in the UI's language. */
+export interface MissingLabels {
+  noCountry: string;
+  noBrand: string;
+}
 
 export interface CapFilters {
   q: string;
@@ -131,6 +129,7 @@ export interface FacetOption {
 export function facetOptions(
   caps: BeerCap[],
   facet: "country" | "brand",
+  labels: MissingLabels,
 ): FacetOption[] {
   const counts = new Map<string, { name: string; count: number }>();
   for (const cap of caps) {
@@ -138,7 +137,7 @@ export function facetOptions(
     if (!value) continue;
     const name =
       facet === "country"
-        ? (cap.beer.country?.name ?? "No country")
+        ? (cap.beer.country?.name ?? labels.noCountry)
         : (cap.beer.beer_brand?.name ?? "");
     const entry = counts.get(value) ?? { name, count: 0 };
     entry.count += 1;
@@ -171,7 +170,11 @@ export interface CapGroup {
  * in alphabetical order with "No country" last. Order inside a section
  * is kept.
  */
-export function groupCaps(caps: BeerCap[], group: GroupKey): CapGroup[] {
+export function groupCaps(
+  caps: BeerCap[],
+  group: GroupKey,
+  labels: MissingLabels,
+): CapGroup[] {
   if (group === "none") return [{ key: "all", title: "", caps }];
 
   const groups = new Map<string, CapGroup>();
@@ -179,8 +182,8 @@ export function groupCaps(caps: BeerCap[], group: GroupKey): CapGroup[] {
     const key = group === "country" ? countryKey(cap) : brandKey(cap);
     const title =
       group === "country"
-        ? (cap.beer.country?.name ?? "No country")
-        : (cap.beer.beer_brand?.name ?? "No brand");
+        ? (cap.beer.country?.name ?? labels.noCountry)
+        : (cap.beer.beer_brand?.name ?? labels.noBrand);
     const section = groups.get(key) ?? { key, title, caps: [] };
     section.caps.push(cap);
     groups.set(key, section);
@@ -201,11 +204,11 @@ export function hasActiveFilters(filters: CapFilters): boolean {
 }
 
 const isSortKey = (v: string | null): v is SortKey =>
-  SORT_OPTIONS.some((o) => o.value === v);
+  SORT_KEYS.some((key) => key === v);
 const isRating = (v: string | null): v is Exclude<RatingFilter, null> =>
-  RATING_OPTIONS.some((o) => o.value === v);
+  RATING_FILTERS.some((key) => key === v);
 const isGroup = (v: string | null): v is GroupKey =>
-  GROUP_OPTIONS.some((o) => o.value === v);
+  GROUP_KEYS.some((key) => key === v);
 
 export function filtersFromParams(params: URLSearchParams): CapFilters {
   const sort = params.get("sort");

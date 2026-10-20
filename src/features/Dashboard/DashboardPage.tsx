@@ -2,6 +2,7 @@ import { Button, Stack, Text, Title, VisuallyHidden } from "@mantine/core";
 import { IconPlus, IconRefresh } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { useAdmin } from "../../admin/adminContext";
 import { getAllCaps } from "../../api/beerCaps";
@@ -30,6 +31,7 @@ import { useCapFilters } from "./useCapFilters";
 const SKELETON_TILES = Array.from({ length: 16 }, (_, i) => i);
 
 export function DashboardPage() {
+  const { t } = useTranslation();
   const { isAdmin } = useAdmin();
   const {
     data: caps,
@@ -59,9 +61,11 @@ export function DashboardPage() {
     () => filterAndSortCaps(allCaps, filters),
     [allCaps, filters],
   );
+  const noCountry = t("filters.noCountry");
+  const noBrand = t("filters.noBrand");
   const groups = useMemo(
-    () => groupCaps(visibleCaps, filters.group),
-    [visibleCaps, filters.group],
+    () => groupCaps(visibleCaps, filters.group, { noCountry, noBrand }),
+    [visibleCaps, filters.group, noCountry, noBrand],
   );
   // Previous/next on a cap's page follow the order shown here.
   const capIds = useMemo(
@@ -69,10 +73,13 @@ export function DashboardPage() {
     [groups],
   );
   const countryOptions = useMemo(
-    () => facetOptions(allCaps, "country"),
-    [allCaps],
+    () => facetOptions(allCaps, "country", { noCountry, noBrand }),
+    [allCaps, noCountry, noBrand],
   );
-  const brandOptions = useMemo(() => facetOptions(allCaps, "brand"), [allCaps]);
+  const brandOptions = useMemo(
+    () => facetOptions(allCaps, "brand", { noCountry, noBrand }),
+    [allCaps, noCountry, noBrand],
+  );
   const filtering = hasActiveFilters(filters);
   const filterProps = {
     filters,
@@ -83,7 +90,7 @@ export function DashboardPage() {
 
   const heading = (
     <VisuallyHidden>
-      <Title order={1}>Collection</Title>
+      <Title order={1}>{t("collection.title")}</Title>
     </VisuallyHidden>
   );
 
@@ -107,7 +114,7 @@ export function DashboardPage() {
       <>
         {heading}
         <Stack align="flex-start" gap="sm" maw={480} mt="md">
-          <Text fw={600}>The collection couldn't be loaded.</Text>
+          <Text fw={600}>{t("collection.loadFailed")}</Text>
           <Text size="sm" c="dimmed">
             {getErrorMessage(error)}
           </Text>
@@ -117,7 +124,7 @@ export function DashboardPage() {
             loading={isRefetching}
             onClick={() => refetch()}
           >
-            Try again
+            {t("common.tryAgain")}
           </Button>
         </Stack>
       </>
@@ -129,17 +136,17 @@ export function DashboardPage() {
       <>
         {heading}
         <Stack align="flex-start" gap="sm" mt="md">
-          <Text fw={600}>No caps yet.</Text>
+          <Text fw={600}>{t("collection.empty")}</Text>
           {isAdmin ? (
             <Button
               component={Link}
               to="/add"
               leftSection={<IconPlus size={16} />}
             >
-              Add your first cap
+              {t("collection.addFirst")}
             </Button>
           ) : (
-            <Text c="dimmed">Caps appear here once they're added.</Text>
+            <Text c="dimmed">{t("collection.emptyVisitor")}</Text>
           )}
         </Stack>
       </>
@@ -148,8 +155,14 @@ export function DashboardPage() {
 
   const countries = countryOptions.length;
   const summary = filtering
-    ? `${visibleCaps.length} of ${pluralCaps(allCaps.length)}`
-    : `${pluralCaps(allCaps.length)} from ${countries} ${countries === 1 ? "country" : "countries"}`;
+    ? t("collection.filtered", {
+        shown: visibleCaps.length,
+        count: allCaps.length,
+      })
+    : t("collection.summary", {
+        caps: pluralCaps(allCaps.length),
+        countries: t("common.countries", { count: countries }),
+      });
 
   return (
     <div className={classes.page}>
@@ -158,7 +171,7 @@ export function DashboardPage() {
         <CapSearch
           value={filters.q}
           onChange={updateFilters}
-          placeholder="Find a cap by beer, brand or country"
+          placeholder={t("collection.searchPlaceholder")}
         />
       </HeaderSlot>
 
@@ -174,7 +187,7 @@ export function DashboardPage() {
               size="compact-sm"
               onClick={clearFilters}
             >
-              Clear filters
+              {t("collection.clearFilters")}
             </Button>
           )}
           <FilterMenus {...filterProps} />
@@ -189,9 +202,9 @@ export function DashboardPage() {
 
       {visibleCaps.length === 0 ? (
         <Stack align="flex-start" gap="sm" py="xl">
-          <Text fw={600}>No caps match these filters.</Text>
+          <Text fw={600}>{t("collection.noMatch")}</Text>
           <Button variant="default" onClick={clearFilters}>
-            Clear filters
+            {t("collection.clearFilters")}
           </Button>
         </Stack>
       ) : (
